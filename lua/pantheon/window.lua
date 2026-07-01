@@ -35,8 +35,8 @@ local function dimension(value, total, fallback, minimum)
 end
 
 local function make_win_config(opts)
-  local width = dimension(opts.width, vim.o.columns, 0.72, 54)
-  local height = dimension(opts.height, vim.o.lines, 0.72, 16)
+  local width = dimension(opts.width, vim.o.columns, 0.9, 54)
+  local height = dimension(opts.height, vim.o.lines, 0.88, 16)
 
   return {
     relative = "editor",
@@ -137,19 +137,35 @@ local function render_contributors()
     "",
   }
 
-  for index, contributor in ipairs(M.state.opts.contributors or {}) do
+  local contributors = M.state.opts.contributors or {}
+  local index_width = #tostring(math.max(#contributors, 1))
+  local name_width = 4
+  local username_width = 6
+  for _, contributor in ipairs(contributors) do
+    name_width = math.max(name_width, #(contributor.name or contributor.username))
+    username_width = math.max(username_width, #contributor.username)
+  end
+  name_width = math.min(name_width, 24)
+  username_width = math.min(username_width, 18)
+
+  lines[#lines + 1] = ("  %" .. index_width .. "s  %-" .. name_width .. "s  %-" .. (username_width + 1) .. "s  FOCUS"):format(
+    "#",
+    "CONTRIBUTOR",
+    "GITHUB"
+  )
+
+  for index, contributor in ipairs(contributors) do
     local line = #lines + 1
-    lines[line] = ("  %d  %s"):format(index, contributor.name or contributor.username)
-    lines[#lines + 1] = ("     @%s · %s"):format(
-      contributor.username,
-      contributor.description or "GitHub contributor"
+    local prefix = ("  %" .. index_width .. "d  %-" .. name_width .. "s  @%-" .. username_width .. "s  "):format(
+      index,
+      contributor.name or contributor.username,
+      contributor.username
     )
-    lines[#lines + 1] = ""
+    lines[line] = trim_to_width(prefix .. (contributor.description or "GitHub contributor"), vim.api.nvim_win_get_width(M.state.win) - 2)
     M.state.line_targets[line] = contributor
-    M.state.line_targets[line + 1] = contributor
   end
 
-  if #(M.state.opts.contributors or {}) == 0 then
+  if #contributors == 0 then
     lines[#lines + 1] = "  No contributors configured."
   end
   footer(lines, "↵ view activity   o open profile   q close")
@@ -157,17 +173,18 @@ local function render_contributors()
 
   highlight(2, 2, -1, "Title")
   highlight(3, 2, -1, "Comment")
+  highlight(5, 2, -1, "Comment")
   for line, _ in pairs(M.state.line_targets) do
-    if lines[line]:match("^  %d") then
-      highlight(line, 2, -1, "Function")
-    else
-      highlight(line, 5, -1, "Comment")
+    local username_start = lines[line]:find("@", 1, true)
+    highlight(line, 2, username_start and (username_start - 2) or -1, "Function")
+    if username_start then
+      highlight(line, username_start - 1, username_start + username_width, "Identifier")
     end
   end
   highlight(#lines, 2, -1, "Comment")
 
-  if M.state.line_targets[5] and is_valid_win(M.state.win) then
-    vim.api.nvim_win_set_cursor(M.state.win, { 5, 0 })
+  if M.state.line_targets[6] and is_valid_win(M.state.win) then
+    vim.api.nvim_win_set_cursor(M.state.win, { 6, 0 })
   end
 end
 
@@ -324,6 +341,40 @@ local function open_current()
   end
 end
 
+local function move_cursor(direction)
+  if M.state.view ~= "contributors" then
+    vim.cmd.normal({ direction > 0 and "j" or "k", bang = true })
+    return
+  end
+
+  local selectable = {}
+  for line, target in pairs(M.state.line_targets) do
+    if type(target) == "table" then
+      selectable[#selectable + 1] = line
+    end
+  end
+  table.sort(selectable)
+  if #selectable == 0 then
+    return
+  end
+
+  local current = vim.api.nvim_win_get_cursor(M.state.win)[1]
+  local selected = direction > 0 and selectable[1] or selectable[#selectable]
+  for index, line in ipairs(selectable) do
+    if line == current then
+      local next_index = ((index - 1 + direction) % #selectable) + 1
+      selected = selectable[next_index]
+      break
+    elseif direction > 0 and line > current then
+      selected = line
+      break
+    elseif direction < 0 and line < current then
+      selected = line
+    end
+  end
+  vim.api.nvim_win_set_cursor(M.state.win, { selected, 0 })
+end
+
 local function map_keys(buf)
   local map = function(lhs, rhs, desc)
     vim.keymap.set("n", lhs, rhs, { buffer = buf, nowait = true, silent = true, desc = desc })
@@ -332,6 +383,18 @@ local function map_keys(buf)
   map("<Esc>", M.close, "Close Pantheon")
   map("<CR>", select_current, "Select Pantheon item")
   map("o", open_current, "Open Pantheon item in browser")
+  map("j", function()
+    move_cursor(1)
+  end, "Select next Pantheon contributor")
+  map("k", function()
+    move_cursor(-1)
+  end, "Select previous Pantheon contributor")
+  map("<Down>", function()
+    move_cursor(1)
+  end, "Select next Pantheon contributor")
+  map("<Up>", function()
+    move_cursor(-1)
+  end, "Select previous Pantheon contributor")
   map("b", function()
     if M.state.view == "activity" then
       M.state.request_id = M.state.request_id + 1
@@ -372,6 +435,8 @@ function M.open(opts)
 
   vim.wo[win].wrap = false
   vim.wo[win].cursorline = true
+  vim.wo[win].cursorlineopt = "line"
+  vim.wo[win].winhighlight = "CursorLine:PmenuSel"
   vim.wo[win].number = false
   vim.wo[win].relativenumber = false
   vim.wo[win].signcolumn = "no"
