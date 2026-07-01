@@ -6,7 +6,6 @@ local defaults = {
   border = "rounded",
   title = " Pantheon ",
   per_page = 30,
-  combined_limit = 100,
   cache_ttl = 300,
   request_timeout = 15,
   token = nil,
@@ -111,6 +110,26 @@ local defaults = {
       name = "Steven Arcangeli",
       username = "stevearc",
       description = "Creator of influential Neovim plugins and developer tooling",
+    },
+    {
+      name = "Charlie Marsh",
+      username = "charliermarsh",
+      description = "Builder of Ruff, uv, ty, and high-performance Python tooling",
+    },
+    {
+      name = "Andrew Gallant",
+      username = "BurntSushi",
+      description = "Creator of ripgrep and foundational Rust regex and datetime libraries",
+    },
+    {
+      name = "Carl Lerche",
+      username = "carllerche",
+      description = "Rust asynchronous systems engineer and creator of Tokio",
+    },
+    {
+      name = "Georgi Gerganov",
+      username = "ggerganov",
+      description = "Creator of llama.cpp, whisper.cpp, and efficient local AI tooling",
     },
   },
 }

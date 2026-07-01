@@ -14,7 +14,6 @@ people whose work is worth following.
 require("pantheon").setup({
   width = 0.9,
   height = 0.88,
-  combined_limit = 100,
   contributors = {
     {
       name = "Mitchell Hashimoto",
@@ -106,6 +105,26 @@ require("pantheon").setup({
       username = "stevearc",
       description = "Creator of influential Neovim plugins and developer tooling",
     },
+    {
+      name = "Charlie Marsh",
+      username = "charliermarsh",
+      description = "Builder of Ruff, uv, ty, and high-performance Python tooling",
+    },
+    {
+      name = "Andrew Gallant",
+      username = "BurntSushi",
+      description = "Creator of ripgrep and foundational Rust regex and datetime libraries",
+    },
+    {
+      name = "Carl Lerche",
+      username = "carllerche",
+      description = "Rust asynchronous systems engineer and creator of Tokio",
+    },
+    {
+      name = "Georgi Gerganov",
+      username = "ggerganov",
+      description = "Creator of llama.cpp, whisper.cpp, and efficient local AI tooling",
+    },
   },
 })
 ```
@@ -114,7 +133,6 @@ Run `:PantheonOpen`, `:PantheonClose`, or `:PantheonToggle`.
 
 Inside Pantheon:
 
-- Select `All contributors` to merge every configured user's events into one chronological feed.
 - `i`, `k`, `j`, and `l` move up, down, left/back, and right/select.
 - `<CR>` selects a contributor or opens an activity item.
 - `o` opens the selected profile or activity item in your browser.

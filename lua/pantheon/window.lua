@@ -170,17 +170,9 @@ local function preview_items(contributor, events, err, cached)
   local items = {
     [2] = { "PREVIEW", "Title" },
     [4] = { contributor.name or contributor.username, "Function" },
-    [5] = { contributor.combined and "Combined feed" or ("@" .. contributor.username), "Identifier" },
+    [5] = { "@" .. contributor.username, "Identifier" },
     [7] = { contributor.description or "GitHub contributor", "Comment" },
   }
-
-  if contributor.combined then
-    items[9] = { "ALL ACTIVITY", "Special" }
-    items[10] = { "Merges every contributor into one", "NormalFloat" }
-    items[11] = { "newest-first timeline.", "NormalFloat" }
-    items[13] = { "Press l or <Enter> to open.", "Comment" }
-    return items
-  end
 
   if err then
     items[9] = { "PREVIEW UNAVAILABLE", "DiagnosticError" }
@@ -215,7 +207,7 @@ local function queue_preview(contributor)
     return
   end
 
-  local key = contributor.combined and "__combined" or contributor.username
+  local key = contributor.username
   if M.state.preview_key == key then
     return
   end
@@ -224,9 +216,6 @@ local function queue_preview(contributor)
   local request_id = M.state.preview_request_id
 
   render_preview_panel(preview_items(contributor))
-  if contributor.combined then
-    return
-  end
 
   vim.defer_fn(function()
     if request_id ~= M.state.preview_request_id or M.state.view ~= "contributors" then
@@ -250,31 +239,20 @@ local function render_contributors()
   M.state.preview_request_id = M.state.preview_request_id + 1
 
   local lines = {
-    -- "",
+    "",
     "  COMMUNITY FIGURES",
     "  Public GitHub activity",
     "",
   }
 
   local contributors = M.state.opts.contributors or {}
-  local choices = {}
-  if #contributors > 0 then
-    choices[1] = {
-      name = "All contributors",
-      combined = true,
-      contributors = contributors,
-      description = "One timeline merged from every contributor below",
-    }
-    vim.list_extend(choices, contributors)
-  end
-
   local index_width = #tostring(math.max(#contributors, 1))
   local left_width = preview_left_width(vim.api.nvim_win_get_width(M.state.win))
   local name_width = 4
   local username_width = 6
-  for _, contributor in ipairs(choices) do
+  for _, contributor in ipairs(contributors) do
     name_width = math.max(name_width, #(contributor.name or contributor.username))
-    username_width = math.max(username_width, #(contributor.combined and "all" or ("@" .. contributor.username)))
+    username_width = math.max(username_width, #(contributor.username) + 1)
   end
   username_width = math.min(username_width, 14)
   name_width = math.min(name_width, math.max(10, left_width - index_width - username_width - 8))
@@ -283,10 +261,10 @@ local function render_contributors()
     "#", pad_cell("CONTRIBUTOR", name_width), pad_cell("GITHUB", username_width)
   )
 
-  for index, contributor in ipairs(choices) do
+  for index, contributor in ipairs(contributors) do
     local line = #lines + 1
-    local index_label = contributor.combined and "*" or tostring(index - 1)
-    local handle = contributor.combined and "all" or ("@" .. contributor.username)
+    local index_label = tostring(index)
+    local handle = "@" .. contributor.username
     local prefix = ("  %" .. index_width .. "s  %s  %s"):format(
       index_label,
       pad_cell(contributor.name or contributor.username, name_width),
@@ -321,11 +299,10 @@ local function render_contributors()
 end
 
 local function render_loading(contributor)
-  local subtitle = contributor.combined and "Merging every configured public feed" or ("@" .. contributor.username)
   local lines = {
     "",
     "  " .. (contributor.name or contributor.username),
-    "  " .. subtitle,
+    "  @" .. contributor.username,
     "",
     "  Loading recent GitHub activity…",
   }
@@ -338,11 +315,10 @@ end
 
 local function render_error(message)
   local contributor = M.state.contributor
-  local subtitle = contributor.combined and "Combined activity" or ("@" .. contributor.username)
   local lines = {
     "",
     "  " .. (contributor.name or contributor.username),
-    "  " .. subtitle,
+    "  @" .. contributor.username,
     "",
     "  Could not load activity",
     "  " .. message,
@@ -360,12 +336,11 @@ local function render_activity(events, cached, notice)
   M.state.events = events
   M.state.line_targets = {}
   local width = vim.api.nvim_win_get_width(M.state.win)
-  local subtitle = contributor.combined and "all configured contributors" or ("@" .. contributor.username)
   local lines = {
     "",
     "  " .. (contributor.name or contributor.username),
     ("  %s · %d recent public events%s"):format(
-      subtitle,
+      "@" .. contributor.username,
       #events,
       cached and " · cached" or ""
     ),
@@ -380,9 +355,7 @@ local function render_activity(events, cached, notice)
     local item = actions.describe(event)
     local event_line = #lines + 1
     first_event_line = first_event_line or event_line
-    local actor = event._pantheon_contributor
-    local actor_prefix = actor and ((actor.name or actor.username) .. " · ") or ""
-    lines[event_line] = trim_to_width(("  %s  %s%s"):format(item.icon, actor_prefix, item.text), width - 2)
+    lines[event_line] = trim_to_width(("  %s  %s"):format(item.icon, item.text), width - 2)
     lines[#lines + 1] = "     " .. relative_time(event.created_at)
     if item.detail then
       lines[#lines + 1] = trim_to_width("     “" .. item.detail .. "”", width - 2)
@@ -438,11 +411,7 @@ local function load_activity(contributor, force)
     end
   end
 
-  if contributor.combined then
-    github.events_many(contributor.contributors, request_opts, callback)
-  else
-    github.events(contributor.username, request_opts, callback)
-  end
+  github.events(contributor.username, request_opts, callback)
 end
 
 local function target_on_cursor()
@@ -481,7 +450,7 @@ end
 local function open_current()
   local target = target_on_cursor()
   if M.state.view == "contributors" and type(target) == "table" then
-    open_url(target.combined and "https://github.com" or ("https://github.com/" .. target.username))
+    open_url("https://github.com/" .. target.username)
   elseif M.state.view == "activity" then
     if type(target) == "string" then
       open_url(target)
@@ -558,13 +527,7 @@ local function map_keys(buf)
   map("b", go_back, "Return to Pantheon contributors")
   map("r", function()
     if M.state.view == "activity" and M.state.contributor then
-      if M.state.contributor.combined then
-        for _, contributor in ipairs(M.state.contributor.contributors) do
-          github.clear(contributor.username)
-        end
-      else
-        github.clear(M.state.contributor.username)
-      end
+      github.clear(M.state.contributor.username)
       load_activity(M.state.contributor, true)
     end
   end, "Refresh Pantheon activity")
