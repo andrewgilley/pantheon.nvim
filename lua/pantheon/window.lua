@@ -221,7 +221,8 @@ local function preview_items(contributor, events, err, cached)
   for index = 1, math.min(8, #events) do
     local event = events[index]
     local item = actions.describe(event)
-    items[line] = { item.icon .. "  " .. item.text, "NormalFloat" }
+    local text = item.detail and (item.text .. "  ·  “" .. item.detail .. "”") or item.text
+    items[line] = { item.icon .. "  " .. text, "NormalFloat" }
     items[line + 1] = { relative_time(event.created_at), "Comment" }
     line = line + 2
   end
@@ -346,7 +347,7 @@ local function render_contributors()
     lines[#lines + 1] = "  No contributors configured."
   end
   lines[#lines + 1] = "  " .. string.rep("─", math.max(1, left_width - 2))
-  lines[#lines + 1] = "  i/k move   l open   f types   F global"
+  lines[#lines + 1] = "  i/k move   l/→ open   f types   F global   <C-c> close"
   set_lines(lines)
   vim.wo[M.state.win].cursorline = false
 
@@ -440,7 +441,7 @@ local function render_filters(scope, selected_type)
       selected_line = line
     end
   end
-  footer(lines, "i/k move   space/l toggle   a all   n none   j back")
+  footer(lines, "i/k move   space/l/→ toggle   a all   n none   j/← back")
   set_lines(lines)
   vim.wo[M.state.win].cursorline = true
 
@@ -494,7 +495,7 @@ local function render_loading(contributor)
     "",
     "  Loading recent GitHub activity…",
   }
-  footer(lines, "j/b back   q close")
+  footer(lines, "j/b/← back   <C-c> close")
   set_lines(lines)
   vim.wo[M.state.win].cursorline = true
   highlight(2, 2, -1, "Title")
@@ -512,7 +513,7 @@ local function render_error(message)
     "  Could not load activity",
     "  " .. message,
   }
-  footer(lines, "r retry   j/b back   o open profile   q close")
+  footer(lines, "r retry   j/b/← back   o open profile   <C-c> close")
   set_lines(lines)
   vim.wo[M.state.win].cursorline = true
   highlight(2, 2, -1, "Title")
@@ -545,20 +546,15 @@ local function render_activity(events, cached, notice)
     local item = actions.describe(event)
     local event_line = #lines + 1
     first_event_line = first_event_line or event_line
-    lines[event_line] = activity_line(item.icon, item.text, relative_time(event.created_at), width - 2)
-    if item.detail then
-      lines[#lines + 1] = trim_to_width("     “" .. item.detail .. "”", width - 2)
-    end
+    local text = item.detail and (item.text .. "  ·  “" .. item.detail .. "”") or item.text
+    lines[event_line] = activity_line(item.icon, text, relative_time(event.created_at), width - 2)
     M.state.line_targets[event_line] = item.url
-    if item.detail then
-      M.state.line_targets[event_line + 1] = item.url
-    end
   end
 
   if #events == 0 then
     lines[#lines + 1] = "  No recent public activity was returned."
   end
-  footer(lines, "i/k move   l/↵ open   f types   F global   r refresh   j/b back   q close")
+  footer(lines, "i/k move   l/↵/→ open   f types   F global   r refresh   j/b/← back   <C-c> close")
   set_lines(lines)
   vim.wo[M.state.win].cursorline = true
 
@@ -722,10 +718,11 @@ local function map_keys(buf)
   local map = function(lhs, rhs, desc)
     vim.keymap.set("n", lhs, rhs, { buffer = buf, nowait = true, silent = true, desc = desc })
   end
-  map("q", M.close, "Close Pantheon")
+  map("<C-c>", M.close, "Close Pantheon")
   map("<Esc>", M.close, "Close Pantheon")
   map("<CR>", select_current, "Select Pantheon item")
   map("l", select_current, "Move right in Pantheon")
+  map("<Right>", select_current, "Move right in Pantheon")
   map("<Space>", toggle_filter_type, "Toggle Pantheon activity type")
   map("o", open_current, "Open Pantheon item in browser")
   map("f", function()
@@ -747,6 +744,7 @@ local function map_keys(buf)
     move_cursor(1)
   end, "Move down in Pantheon")
   map("j", go_back, "Move left in Pantheon")
+  map("<Left>", go_back, "Move left in Pantheon")
   map("<Down>", function()
     move_cursor(1)
   end, "Select next Pantheon contributor")

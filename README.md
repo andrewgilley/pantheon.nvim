@@ -136,6 +136,7 @@ Run `:PantheonOpen`, `:PantheonClose`, or `:PantheonToggle`.
 Inside Pantheon:
 
 - `i`, `k`, `j`, and `l` move up, down, left/back, and right/select.
+- `<Left>` goes back and `<Right>` selects or opens the highlighted item.
 - `f` opens the activity-type checklist for the selected contributor.
 - `F` opens the global activity-type checklist.
 - In a checklist, `<Space>`, `l`, or `<CR>` toggles a checkbox; `a` enables all and `n` disables all.
@@ -143,7 +144,7 @@ Inside Pantheon:
 - `o` opens the selected profile or activity item in your browser.
 - `r` bypasses the five-minute cache and refreshes activity.
 - `b` returns to the contributor list.
-- `q` or `<Esc>` closes the window.
+- `<C-c>` or `<Esc>` closes the window.
 
 Pantheon uses GitHub's public events API. It works without authentication and
 uses `GITHUB_TOKEN` automatically when that environment variable is present.
