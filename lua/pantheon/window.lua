@@ -347,7 +347,7 @@ local function render_contributors()
     lines[#lines + 1] = "  No contributors configured."
   end
   lines[#lines + 1] = "  " .. string.rep("─", math.max(1, left_width - 2))
-  lines[#lines + 1] = "  i/k move   l/→ open   f types   F global   <C-c> close"
+  lines[#lines + 1] = "  i/k move   l/→ open   f types   F global   q/<C-c> close"
   set_lines(lines)
   vim.wo[M.state.win].cursorline = false
 
@@ -495,7 +495,7 @@ local function render_loading(contributor)
     "",
     "  Loading recent GitHub activity…",
   }
-  footer(lines, "j/b/← back   <C-c> close")
+  footer(lines, "j/b/← back   q/<C-c> close")
   set_lines(lines)
   vim.wo[M.state.win].cursorline = true
   highlight(2, 2, -1, "Title")
@@ -513,7 +513,7 @@ local function render_error(message)
     "  Could not load activity",
     "  " .. message,
   }
-  footer(lines, "r retry   j/b/← back   o open profile   <C-c> close")
+  footer(lines, "r retry   j/b/← back   o open profile   q/<C-c> close")
   set_lines(lines)
   vim.wo[M.state.win].cursorline = true
   highlight(2, 2, -1, "Title")
@@ -554,7 +554,8 @@ local function render_activity(events, cached, notice)
   if #events == 0 then
     lines[#lines + 1] = "  No recent public activity was returned."
   end
-  footer(lines, "i/k move   l/↵/→ open   f types   F global   r refresh   j/b/← back   <C-c> close")
+  footer(lines, "i/k move   l/↵/→ open   f types   F global   r refresh   j/b/← back   q/<C-c> close")
+  lines[#lines + 1] = ""
   set_lines(lines)
   vim.wo[M.state.win].cursorline = true
 
@@ -571,7 +572,7 @@ local function render_activity(events, cached, notice)
       highlight(line, 5, -1, "Comment")
     end
   end
-  highlight(#lines, 2, -1, "Comment")
+  highlight(#lines - 1, 2, -1, "Comment")
   if first_event_line then
     vim.api.nvim_win_set_cursor(M.state.win, { first_event_line, 0 })
   end
@@ -719,6 +720,7 @@ local function map_keys(buf)
     vim.keymap.set("n", lhs, rhs, { buffer = buf, nowait = true, silent = true, desc = desc })
   end
   map("<C-c>", M.close, "Close Pantheon")
+  map("q", M.close, "Close Pantheon")
   map("<Esc>", M.close, "Close Pantheon")
   map("<CR>", select_current, "Select Pantheon item")
   map("l", select_current, "Move right in Pantheon")

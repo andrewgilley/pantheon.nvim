@@ -144,7 +144,7 @@ Inside Pantheon:
 - `o` opens the selected profile or activity item in your browser.
 - `r` bypasses the five-minute cache and refreshes activity.
 - `b` returns to the contributor list.
-- `<C-c>` or `<Esc>` closes the window.
+- `q`, `<C-c>`, or `<Esc>` closes the window.
 
 Pantheon uses GitHub's public events API. It works without authentication and
 uses `GITHUB_TOKEN` automatically when that environment variable is present.
