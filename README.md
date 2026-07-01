@@ -16,6 +16,7 @@ require("pantheon").setup({
   height = 0.88,
   row = 1,
   randomize = true,
+  push_detail_limit = 10,
   activity_types = nil,
   user_activity_types = {},
   persist_filters = true,
@@ -66,6 +67,11 @@ require("pantheon").setup({
       name = "Shadab Ahmed",
       username = "shadcn",
       description = "Creator of shadcn/ui and open-code interface tooling",
+    },
+    {
+      name = "Andrej Karpathy",
+      username = "karpathy",
+      description = "AI researcher and creator of nanoGPT, llm.c, and micrograd",
     },
     {
       name = "Jake Fitzgerald",
@@ -147,6 +153,11 @@ than storing credentials in your Neovim configuration.
 
 GitHub public events are not real-time and can be delayed. Only public activity
 is shown.
+
+GitHub no longer includes commit metadata in push events. Pantheon enriches up
+to `push_detail_limit` pushes with cached compare requests so push items show a
+commit count and latest commit message. A `GITHUB_TOKEN` is recommended if you
+preview many contributors because unauthenticated API limits are lower.
 
 ## Activity filters
 

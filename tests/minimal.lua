@@ -3,12 +3,13 @@ vim.opt.runtimepath:append(vim.fn.getcwd())
 local pantheon = require("pantheon")
 local actions = require("pantheon.actions")
 local browser = require("pantheon.browser")
+local github = require("pantheon.github")
 local storage = require("pantheon.storage")
 
 pantheon.setup({ persist_filters = false })
 local expected_contributors = {
   "mitchellh", "lukewagner", "matklad", "ThePrimeagen", "ryanfleury",
-  "gingerBill", "jonhoo", "Jarred-Sumner", "shadcn",
+  "gingerBill", "jonhoo", "Jarred-Sumner", "shadcn", "karpathy",
   "earthtojake", "folke", "rockorager", "simonw", "stevearc",
   "charliermarsh", "BurntSushi", "carllerche", "ggerganov",
   "dtolnay",
@@ -46,6 +47,21 @@ local push = actions.describe({
 assert(push.text == "Pushed 2 commits to example/project · main")
 assert(push.detail == "Useful change")
 assert(push.url == "https://github.com/example/project/commit/abc123")
+
+local enriched_push = github.apply_push_comparison({
+  type = "PushEvent",
+  repo = { name = "example/project" },
+  payload = { ref = "refs/heads/main", head = "def456" },
+}, {
+  total_commits = 2,
+  commits = {
+    { sha = "abc123", commit = { message = "First change" } },
+    { sha = "def456", commit = { message = "Second change\n\nDetails" } },
+  },
+})
+local enriched_description = actions.describe(enriched_push)
+assert(enriched_description.text == "Pushed 2 commits to example/project · main")
+assert(enriched_description.detail == "Second change")
 
 local comment = actions.describe({
   type = "IssueCommentEvent",

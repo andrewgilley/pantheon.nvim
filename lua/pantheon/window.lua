@@ -258,6 +258,14 @@ local function queue_preview(contributor)
       end
       local filtered = events and actions.filter(events, activity_types_for(contributor)) or nil
       render_preview_panel(preview_items(contributor, filtered, err, cached))
+      if filtered then
+        github.enrich_pushes(filtered, M.state.opts, function(enriched)
+          if request_id ~= M.state.preview_request_id or M.state.view ~= "contributors" then
+            return
+          end
+          render_preview_panel(preview_items(contributor, enriched, nil, cached))
+        end)
+      end
     end)
   end, 150)
 end
@@ -580,7 +588,14 @@ local function load_activity(contributor, force)
     if err then
       render_error(err)
     else
-      render_activity(actions.filter(events, activity_types_for(contributor)), cached, notice)
+      local filtered = actions.filter(events, activity_types_for(contributor))
+      render_activity(filtered, cached, notice)
+      github.enrich_pushes(filtered, request_opts, function(enriched)
+        if request_id ~= M.state.request_id or M.state.view ~= "activity" then
+          return
+        end
+        render_activity(enriched, cached, notice)
+      end)
     end
   end
 

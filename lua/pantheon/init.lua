@@ -7,6 +7,7 @@ local defaults = {
   border = "rounded",
   title = " Pantheon ",
   per_page = 30,
+  push_detail_limit = 10,
   cache_ttl = 300,
   request_timeout = 15,
   randomize = true,
@@ -70,6 +71,12 @@ local defaults = {
       name = "Shadan Ahmed",
       username = "shadcn",
       description = "Creator of shadcn/ui and open-code interface tooling",
+    },
+
+    {
+      name = "Andrej Karpathy",
+      username = "karpathy",
+      description = "AI researcher and creator of nanoGPT, llm.c, and micrograd",
     },
 
     {
