@@ -38,7 +38,7 @@ function M.command(config, url)
       vim.env.PROGRAMFILES and (vim.env.PROGRAMFILES .. "\\Microsoft\\Edge\\Application\\msedge.exe"),
     })
     if browser then
-      return { browser, "--no-first-run", "--no-default-browser-check", "--app=" .. url }
+      return { browser, "--no-first-run", "--no-default-browser-check", "--new-window", url }
     end
 
     local firefox = first_executable({
@@ -53,7 +53,7 @@ function M.command(config, url)
   else
     local browser = first_executable({ "google-chrome", "chromium", "chromium-browser" })
     if browser then
-      return { browser, "--no-first-run", "--no-default-browser-check", "--app=" .. url }
+      return { browser, "--no-first-run", "--no-default-browser-check", "--new-window", url }
     end
     local firefox = first_executable({ "firefox" })
     if firefox then
