@@ -9,6 +9,7 @@ local expected_contributors = {
   "gingerBill", "lattner", "jonhoo", "Jarred-Sumner", "shadcn", "karpathy",
   "earthtojake", "folke", "rockorager", "simonw", "stevearc",
   "charliermarsh", "BurntSushi", "carllerche", "ggerganov",
+  "dtolnay",
 }
 for index, username in ipairs(expected_contributors) do
   assert(pantheon.config.contributors[index].username == username)

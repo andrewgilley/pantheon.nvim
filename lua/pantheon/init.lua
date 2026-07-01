@@ -131,6 +131,11 @@ local defaults = {
       username = "ggerganov",
       description = "Creator of llama.cpp, whisper.cpp, and efficient local AI tooling",
     },
+    {
+      name = "David Tolnay",
+      username = "dtolnay",
+      description = "Creator and maintainer of foundational Rust libraries and procedural macro tooling",
+    },
   },
 }
 
