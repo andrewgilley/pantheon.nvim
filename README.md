@@ -37,7 +37,7 @@ require("pantheon").setup({
       description = "Rust Analyzer co-creator and TigerBeetle engineer",
     },
     {
-      name = "ThePrimeagen",
+      name = "Michael Paulson",
       username = "ThePrimeagen",
       description = "Vim, developer tooling, and performance-focused programming",
     },
@@ -47,7 +47,7 @@ require("pantheon").setup({
       description = "Systems programming, debuggers, and data-oriented tools",
     },
     {
-      name = "Ginger Bill",
+      name = "Bill Hall",
       username = "gingerBill",
       description = "Creator of the Odin programming language",
     },
@@ -57,17 +57,12 @@ require("pantheon").setup({
       description = "Rust educator and distributed systems engineer",
     },
     {
-      name = "Joran Dirk Greef",
-      username = "jorangreef",
-      description = "Creator, founder, and CEO of TigerBeetle",
-    },
-    {
       name = "Jarred Sumner",
       username = "Jarred-Sumner",
       description = "Creator of the Bun JavaScript runtime and toolkit",
     },
     {
-      name = "shadcn",
+      name = "Shadab Ahmed",
       username = "shadcn",
       description = "Creator of shadcn/ui and open-code interface tooling",
     },
@@ -122,7 +117,7 @@ require("pantheon").setup({
       description = "Creator and maintainer of foundational Rust libraries and procedural macro tooling",
     },
     {
-      name = "Justin M. Keyes",
+      name = "Justin Keyes",
       username = "justinmk",
       description = "Neovim maintainer and creator of influential Vim and Neovim tooling",
     },
