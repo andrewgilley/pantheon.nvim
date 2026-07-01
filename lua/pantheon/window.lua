@@ -347,7 +347,7 @@ local function render_contributors()
     lines[#lines + 1] = "  No contributors configured."
   end
   lines[#lines + 1] = "  " .. string.rep("─", math.max(1, left_width - 2))
-  lines[#lines + 1] = "  i/k move   l/→ open   f types   F global   q/<C-c> close"
+  lines[#lines + 1] = "  i/k move  l/→ open  f/F types  q quit"
   set_lines(lines)
   vim.wo[M.state.win].cursorline = false
 
