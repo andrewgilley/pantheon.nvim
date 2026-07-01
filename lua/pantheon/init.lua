@@ -71,6 +71,36 @@ local defaults = {
       username = "shadcn",
       description = "Creator of shadcn/ui and open-code interface tooling",
     },
+    {
+      name = "Andrej Karpathy",
+      username = "karpathy",
+      description = "AI researcher and creator of nanoGPT, llm.c, and micrograd",
+    },
+    {
+      name = "Jake Fitzgerald",
+      username = "earthtojake",
+      description = "Creator of Text-to-CAD and source-controlled CAD tooling",
+    },
+    {
+      name = "Folke Lemaitre",
+      username = "folke",
+      description = "Creator of lazy.nvim, LazyVim, and influential Neovim tooling",
+    },
+    {
+      name = "Tim Culverhouse",
+      username = "rockorager",
+      description = "Creator of libvaxis and modern Zig terminal tooling",
+    },
+    {
+      name = "Simon Willison",
+      username = "simonw",
+      description = "Creator of Datasette and prolific builder of practical LLM tooling",
+    },
+    {
+      name = "Steven Arcangeli",
+      username = "stevearc",
+      description = "Creator of influential Neovim plugins and developer tooling",
+    },
   },
 }
 
