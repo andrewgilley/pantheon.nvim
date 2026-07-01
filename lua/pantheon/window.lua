@@ -4,6 +4,7 @@ local actions = require("pantheon.actions")
 local github = require("pantheon.github")
 
 local ns = vim.api.nvim_create_namespace("pantheon")
+local preview_ns = vim.api.nvim_create_namespace("pantheon_preview")
 
 M.state = {
   buf = nil,
@@ -13,6 +14,9 @@ M.state = {
   events = nil,
   line_targets = {},
   request_id = 0,
+  preview_request_id = 0,
+  preview_key = nil,
+  preview_items = nil,
   opts = {},
 }
 
@@ -68,6 +72,8 @@ local function set_lines(lines)
   vim.api.nvim_buf_set_lines(M.state.buf, 0, -1, false, lines)
   vim.bo[M.state.buf].modifiable = false
   vim.api.nvim_buf_clear_namespace(M.state.buf, ns, 0, -1)
+  vim.api.nvim_buf_clear_namespace(M.state.buf, preview_ns, 0, -1)
+  M.state.preview_items = nil
 end
 
 local function highlight(line, start_col, end_col, group)
@@ -79,6 +85,11 @@ local function trim_to_width(text, width)
     return text
   end
   return vim.fn.strcharpart(text, 0, math.max(1, width - 1)) .. "…"
+end
+
+local function pad_cell(text, width)
+  local value = trim_to_width(text, width)
+  return value .. string.rep(" ", math.max(0, width - vim.fn.strdisplaywidth(value)))
 end
 
 local function relative_time(timestamp)
@@ -124,16 +135,124 @@ local function footer(lines, text)
   lines[#lines + 1] = "  " .. text
 end
 
+local function preview_left_width(window_width)
+  return math.max(30, math.min(math.max(40, math.floor(window_width * 0.46)), window_width - 22))
+end
+
+local function render_preview_panel(items)
+  if M.state.view ~= "contributors" or not is_valid_buf(M.state.buf) or not is_valid_win(M.state.win) then
+    return
+  end
+
+  vim.api.nvim_buf_clear_namespace(M.state.buf, preview_ns, 0, -1)
+  M.state.preview_items = items
+  local window_width = vim.api.nvim_win_get_width(M.state.win)
+  local left_width = preview_left_width(window_width)
+  local right_width = math.max(16, window_width - left_width - 3)
+  local line_count = vim.api.nvim_buf_line_count(M.state.buf)
+
+  for line = 1, line_count do
+    local item = items[line]
+    local text = item and trim_to_width(item[1], right_width - 1) or ""
+    local group = item and item[2] or "NormalFloat"
+    vim.api.nvim_buf_set_extmark(M.state.buf, preview_ns, line - 1, 0, {
+      virt_text = {
+        { "│", "WinSeparator" },
+        { " " .. text, group },
+      },
+      virt_text_win_col = left_width,
+      hl_mode = "combine",
+    })
+  end
+end
+
+local function preview_items(contributor, events, err, cached)
+  local items = {
+    [2] = { "PREVIEW", "Title" },
+    [4] = { contributor.name or contributor.username, "Function" },
+    [5] = { contributor.combined and "Combined feed" or ("@" .. contributor.username), "Identifier" },
+    [7] = { contributor.description or "GitHub contributor", "Comment" },
+  }
+
+  if contributor.combined then
+    items[9] = { "ALL ACTIVITY", "Special" }
+    items[10] = { "Merges every contributor into one", "NormalFloat" }
+    items[11] = { "newest-first timeline.", "NormalFloat" }
+    items[13] = { "Press l or <Enter> to open.", "Comment" }
+    return items
+  end
+
+  if err then
+    items[9] = { "PREVIEW UNAVAILABLE", "DiagnosticError" }
+    items[10] = { err, "Comment" }
+    return items
+  end
+
+  if not events then
+    items[9] = { "Loading recent activity…", "DiagnosticInfo" }
+    return items
+  end
+
+  items[9] = { "RECENT ACTIVITY" .. (cached and " · CACHED" or ""), "Special" }
+  if #events == 0 then
+    items[10] = { "No recent public events.", "Comment" }
+    return items
+  end
+
+  local line = 10
+  for index = 1, math.min(3, #events) do
+    local event = events[index]
+    local item = actions.describe(event)
+    items[line] = { item.icon .. "  " .. item.text, "NormalFloat" }
+    items[line + 1] = { relative_time(event.created_at), "Comment" }
+    line = line + 3
+  end
+  return items
+end
+
+local function queue_preview(contributor)
+  if not contributor or M.state.view ~= "contributors" then
+    return
+  end
+
+  local key = contributor.combined and "__combined" or contributor.username
+  if M.state.preview_key == key then
+    return
+  end
+  M.state.preview_key = key
+  M.state.preview_request_id = M.state.preview_request_id + 1
+  local request_id = M.state.preview_request_id
+
+  render_preview_panel(preview_items(contributor))
+  if contributor.combined then
+    return
+  end
+
+  vim.defer_fn(function()
+    if request_id ~= M.state.preview_request_id or M.state.view ~= "contributors" then
+      return
+    end
+    github.events(contributor.username, M.state.opts, function(events, err, cached)
+      if request_id ~= M.state.preview_request_id or M.state.view ~= "contributors" then
+        return
+      end
+      render_preview_panel(preview_items(contributor, events, err, cached))
+    end)
+  end, 150)
+end
+
 local function render_contributors()
   M.state.view = "contributors"
   M.state.contributor = nil
   M.state.events = nil
   M.state.line_targets = {}
+  M.state.preview_key = nil
+  M.state.preview_request_id = M.state.preview_request_id + 1
 
   local lines = {
     "",
     "  PEOPLE WORTH FOLLOWING",
-    "  Recent public work from thoughtful builders",
+    "  Curated public GitHub activity",
     "",
   }
 
@@ -150,38 +269,37 @@ local function render_contributors()
   end
 
   local index_width = #tostring(math.max(#contributors, 1))
+  local left_width = preview_left_width(vim.api.nvim_win_get_width(M.state.win))
   local name_width = 4
   local username_width = 6
   for _, contributor in ipairs(choices) do
     name_width = math.max(name_width, #(contributor.name or contributor.username))
     username_width = math.max(username_width, #(contributor.combined and "all" or ("@" .. contributor.username)))
   end
-  name_width = math.min(name_width, 24)
-  username_width = math.min(username_width, 18)
+  username_width = math.min(username_width, 14)
+  name_width = math.min(name_width, math.max(10, left_width - index_width - username_width - 8))
 
-  lines[#lines + 1] = ("  %" .. index_width .. "s  %-" .. name_width .. "s  %-" .. (username_width + 1) .. "s  FOCUS"):format(
-    "#",
-    "CONTRIBUTOR",
-    "GITHUB"
+  lines[#lines + 1] = ("  %" .. index_width .. "s  %s  %s"):format(
+    "#", pad_cell("CONTRIBUTOR", name_width), pad_cell("GITHUB", username_width)
   )
 
   for index, contributor in ipairs(choices) do
     local line = #lines + 1
     local index_label = contributor.combined and "*" or tostring(index - 1)
     local handle = contributor.combined and "all" or ("@" .. contributor.username)
-    local prefix = ("  %" .. index_width .. "s  %-" .. name_width .. "s  %-" .. username_width .. "s  "):format(
+    local prefix = ("  %" .. index_width .. "s  %s  %s"):format(
       index_label,
-      contributor.name or contributor.username,
-      handle
+      pad_cell(contributor.name or contributor.username, name_width),
+      pad_cell(handle, username_width)
     )
-    lines[line] = trim_to_width(prefix .. (contributor.description or "GitHub contributor"), vim.api.nvim_win_get_width(M.state.win) - 2)
+    lines[line] = prefix
     M.state.line_targets[line] = contributor
   end
 
   if #contributors == 0 then
     lines[#lines + 1] = "  No contributors configured."
   end
-  footer(lines, "i/k move   l/↵ view activity   o open profile   q close")
+  footer(lines, "i/k move   l open   q close")
   set_lines(lines)
 
   highlight(2, 2, -1, "Title")
@@ -198,6 +316,7 @@ local function render_contributors()
 
   if M.state.line_targets[6] and is_valid_win(M.state.win) then
     vim.api.nvim_win_set_cursor(M.state.win, { 6, 0 })
+    queue_preview(M.state.line_targets[6])
   end
 end
 
@@ -405,6 +524,7 @@ local function move_cursor(direction)
     end
   end
   vim.api.nvim_win_set_cursor(M.state.win, { selected, 0 })
+  queue_preview(M.state.line_targets[selected])
 end
 
 local function go_back()
@@ -453,6 +573,7 @@ end
 
 function M.close()
   M.state.request_id = M.state.request_id + 1
+  M.state.preview_request_id = M.state.preview_request_id + 1
   if is_valid_win(M.state.win) then
     vim.api.nvim_win_close(M.state.win, true)
   end
@@ -461,6 +582,8 @@ function M.close()
   M.state.contributor = nil
   M.state.events = nil
   M.state.line_targets = {}
+  M.state.preview_key = nil
+  M.state.preview_items = nil
 end
 
 function M.open(opts)
@@ -492,6 +615,23 @@ function M.open(opts)
     callback = function()
       if is_valid_win(M.state.win) then
         vim.api.nvim_win_set_config(M.state.win, make_win_config(M.state.opts))
+        if M.state.view == "contributors" and M.state.preview_items then
+          render_preview_panel(M.state.preview_items)
+        end
+      end
+    end,
+  })
+
+  vim.api.nvim_create_autocmd("CursorMoved", {
+    buffer = buf,
+    callback = function()
+      if M.state.view ~= "contributors" or not is_valid_win(M.state.win) then
+        return
+      end
+      local line = vim.api.nvim_win_get_cursor(M.state.win)[1]
+      local contributor = M.state.line_targets[line]
+      if type(contributor) == "table" then
+        queue_preview(contributor)
       end
     end,
   })

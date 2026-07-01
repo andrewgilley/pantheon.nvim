@@ -93,6 +93,16 @@ assert(contributor_rows[1]:find("GITHUB", 1, true))
 assert(contributor_rows[2]:find("All contributors", 1, true))
 assert(contributor_rows[3]:find("@mitchellh", 1, true))
 assert(vim.api.nvim_win_get_cursor(0)[1] == 6)
+local preview_namespace = vim.api.nvim_get_namespaces().pantheon_preview
+local preview_marks = vim.api.nvim_buf_get_extmarks(0, preview_namespace, 0, -1, { details = true })
+assert(#preview_marks > 0)
+local preview_text = {}
+for _, mark in ipairs(preview_marks) do
+  for _, chunk in ipairs(mark[4].virt_text or {}) do
+    preview_text[#preview_text + 1] = chunk[1]
+  end
+end
+assert(table.concat(preview_text, " "):find("ALL ACTIVITY", 1, true))
 local directional_maps = {}
 for _, mapping in ipairs(vim.api.nvim_buf_get_keymap(0, "n")) do
   directional_maps[mapping.lhs] = mapping.desc
