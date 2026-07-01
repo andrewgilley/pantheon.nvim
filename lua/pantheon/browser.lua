@@ -29,6 +29,7 @@ function M.command(config, url)
   end
 
   local system = vim.uv.os_uname().sysname
+  local browser_profile = config.browser_profile or (vim.fn.stdpath("state") .. "/pantheon-browser")
   if system == "Windows_NT" then
     local program_files_x86 = vim.env["PROGRAMFILES(X86)"]
     local browser = first_executable({
@@ -38,7 +39,14 @@ function M.command(config, url)
       vim.env.PROGRAMFILES and (vim.env.PROGRAMFILES .. "\\Microsoft\\Edge\\Application\\msedge.exe"),
     })
     if browser then
-      return { browser, "--no-first-run", "--no-default-browser-check", "--new-window", url }
+      return {
+        browser,
+        "--user-data-dir=" .. browser_profile,
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--new-window",
+        url,
+      }
     end
 
     local firefox = first_executable({
@@ -53,7 +61,14 @@ function M.command(config, url)
   else
     local browser = first_executable({ "google-chrome", "chromium", "chromium-browser" })
     if browser then
-      return { browser, "--no-first-run", "--no-default-browser-check", "--new-window", url }
+      return {
+        browser,
+        "--user-data-dir=" .. browser_profile,
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--new-window",
+        url,
+      }
     end
     local firefox = first_executable({ "firefox" })
     if firefox then

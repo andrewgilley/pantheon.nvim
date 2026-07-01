@@ -72,6 +72,22 @@ local browser_command = browser.command({ browser_command = { "test-browser", "-
 assert(vim.deep_equal(browser_command, { "test-browser", "--new-window", "https://example.com" }))
 local app_command = browser.command({ browser_command = { "test-browser", "--app={url}" } }, "https://example.com")
 assert(vim.deep_equal(app_command, { "test-browser", "--app=https://example.com" }))
+local detected_browser = browser.command({ browser_profile = "test-profile" }, "https://example.com")
+local detected_executable = detected_browser and detected_browser[1]:lower() or ""
+if detected_executable:find("chrome", 1, true)
+  or detected_executable:find("chromium", 1, true)
+  or detected_executable:find("msedge", 1, true)
+then
+  assert(vim.tbl_contains(detected_browser, "--user-data-dir=test-profile"))
+  assert(vim.tbl_contains(detected_browser, "--new-window"))
+  local url_count = 0
+  for _, argument in ipairs(detected_browser) do
+    if argument == "https://example.com" then
+      url_count = url_count + 1
+    end
+  end
+  assert(url_count == 1)
+end
 
 local state_file = vim.fn.tempname()
 local saved, save_error = storage.save(state_file, {
