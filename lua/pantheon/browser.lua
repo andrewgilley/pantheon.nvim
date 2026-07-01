@@ -13,8 +13,18 @@ function M.command(config, url)
   if type(configured) == "function" then
     return configured(url)
   elseif type(configured) == "table" and #configured > 0 then
-    local command = vim.deepcopy(configured)
-    command[#command + 1] = url
+    local command = {}
+    local has_url = false
+    for _, argument in ipairs(configured) do
+      local replaced, count = argument:gsub("{url}", function()
+        return url
+      end)
+      command[#command + 1] = replaced
+      has_url = has_url or count > 0
+    end
+    if not has_url then
+      command[#command + 1] = url
+    end
     return command
   end
 
@@ -28,7 +38,7 @@ function M.command(config, url)
       vim.env.PROGRAMFILES and (vim.env.PROGRAMFILES .. "\\Microsoft\\Edge\\Application\\msedge.exe"),
     })
     if browser then
-      return { browser, "--new-window", url }
+      return { browser, "--no-first-run", "--no-default-browser-check", "--app=" .. url }
     end
 
     local firefox = first_executable({
@@ -43,7 +53,7 @@ function M.command(config, url)
   else
     local browser = first_executable({ "google-chrome", "chromium", "chromium-browser" })
     if browser then
-      return { browser, "--new-window", url }
+      return { browser, "--no-first-run", "--no-default-browser-check", "--app=" .. url }
     end
     local firefox = first_executable({ "firefox" })
     if firefox then

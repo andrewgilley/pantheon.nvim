@@ -125,6 +125,11 @@ local defaults = {
       username = "dtolnay",
       description = "Creator and maintainer of foundational Rust libraries and procedural macro tooling",
     },
+    {
+      name = "Justin M. Keyes",
+      username = "justinmk",
+      description = "Neovim maintainer and creator of influential Vim and Neovim tooling",
+    },
   },
 }
 

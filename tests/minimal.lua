@@ -12,6 +12,7 @@ local expected_contributors = {
   "earthtojake", "folke", "rockorager", "simonw", "stevearc",
   "charliermarsh", "BurntSushi", "carllerche", "ggerganov",
   "dtolnay",
+  "justinmk",
 }
 for index, username in ipairs(expected_contributors) do
   assert(pantheon.config.contributors[index].username == username)
@@ -69,6 +70,8 @@ assert(#actions.filter({ { type = "PushEvent" } }, {}) == 0)
 
 local browser_command = browser.command({ browser_command = { "test-browser", "--new-window" } }, "https://example.com")
 assert(vim.deep_equal(browser_command, { "test-browser", "--new-window", "https://example.com" }))
+local app_command = browser.command({ browser_command = { "test-browser", "--app={url}" } }, "https://example.com")
+assert(vim.deep_equal(app_command, { "test-browser", "--app=https://example.com" }))
 
 local state_file = vim.fn.tempname()
 local saved, save_error = storage.save(state_file, {

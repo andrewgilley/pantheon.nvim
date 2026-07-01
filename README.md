@@ -121,6 +121,11 @@ require("pantheon").setup({
       username = "dtolnay",
       description = "Creator and maintainer of foundational Rust libraries and procedural macro tooling",
     },
+    {
+      name = "Justin M. Keyes",
+      username = "justinmk",
+      description = "Neovim maintainer and creator of influential Vim and Neovim tooling",
+    },
   },
 })
 ```
@@ -182,12 +187,16 @@ Common values are `PushEvent`, `PullRequestEvent`, `PullRequestReviewEvent`,
 
 ## Browser windows
 
-Pantheon detects Chrome, Edge, or Firefox and launches links in a new browser
-window. To choose a browser explicitly, provide its command and new-window flag;
-Pantheon appends the URL:
+Pantheon detects Chrome, Edge, or Firefox and launches links in a standalone
+window. Chromium browsers use application-window mode so a startup tab is not
+opened beside the selected item. To choose a browser explicitly, use `{url}` in
+the argument that should receive the URL:
 
 ```lua
 require("pantheon").setup({
-  browser_command = { "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "--new-window" },
+  browser_command = {
+    "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "--app={url}",
+  },
 })
 ```
