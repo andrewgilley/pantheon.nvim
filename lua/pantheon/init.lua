@@ -6,6 +6,7 @@ local defaults = {
   border = "rounded",
   title = " Pantheon ",
   per_page = 30,
+  combined_limit = 100,
   cache_ttl = 300,
   request_timeout = 15,
   token = nil,
@@ -64,6 +65,11 @@ local defaults = {
       name = "Jarred Sumner",
       username = "Jarred-Sumner",
       description = "Creator of the Bun JavaScript runtime and toolkit",
+    },
+    {
+      name = "shadcn",
+      username = "shadcn",
+      description = "Creator of shadcn/ui and open-code interface tooling",
     },
   },
 }

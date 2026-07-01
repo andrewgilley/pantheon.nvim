@@ -138,12 +138,23 @@ local function render_contributors()
   }
 
   local contributors = M.state.opts.contributors or {}
+  local choices = {}
+  if #contributors > 0 then
+    choices[1] = {
+      name = "All contributors",
+      combined = true,
+      contributors = contributors,
+      description = "One timeline merged from every contributor below",
+    }
+    vim.list_extend(choices, contributors)
+  end
+
   local index_width = #tostring(math.max(#contributors, 1))
   local name_width = 4
   local username_width = 6
-  for _, contributor in ipairs(contributors) do
+  for _, contributor in ipairs(choices) do
     name_width = math.max(name_width, #(contributor.name or contributor.username))
-    username_width = math.max(username_width, #contributor.username)
+    username_width = math.max(username_width, #(contributor.combined and "all" or ("@" .. contributor.username)))
   end
   name_width = math.min(name_width, 24)
   username_width = math.min(username_width, 18)
@@ -154,12 +165,14 @@ local function render_contributors()
     "GITHUB"
   )
 
-  for index, contributor in ipairs(contributors) do
+  for index, contributor in ipairs(choices) do
     local line = #lines + 1
-    local prefix = ("  %" .. index_width .. "d  %-" .. name_width .. "s  @%-" .. username_width .. "s  "):format(
-      index,
+    local index_label = contributor.combined and "*" or tostring(index - 1)
+    local handle = contributor.combined and "all" or ("@" .. contributor.username)
+    local prefix = ("  %" .. index_width .. "s  %-" .. name_width .. "s  %-" .. username_width .. "s  "):format(
+      index_label,
       contributor.name or contributor.username,
-      contributor.username
+      handle
     )
     lines[line] = trim_to_width(prefix .. (contributor.description or "GitHub contributor"), vim.api.nvim_win_get_width(M.state.win) - 2)
     M.state.line_targets[line] = contributor
@@ -168,7 +181,7 @@ local function render_contributors()
   if #contributors == 0 then
     lines[#lines + 1] = "  No contributors configured."
   end
-  footer(lines, "↵ view activity   o open profile   q close")
+  footer(lines, "i/k move   l/↵ view activity   o open profile   q close")
   set_lines(lines)
 
   highlight(2, 2, -1, "Title")
@@ -189,14 +202,15 @@ local function render_contributors()
 end
 
 local function render_loading(contributor)
+  local subtitle = contributor.combined and "Merging every configured public feed" or ("@" .. contributor.username)
   local lines = {
     "",
     "  " .. (contributor.name or contributor.username),
-    "  @" .. contributor.username,
+    "  " .. subtitle,
     "",
     "  Loading recent GitHub activity…",
   }
-  footer(lines, "b back   q close")
+  footer(lines, "j/b back   q close")
   set_lines(lines)
   highlight(2, 2, -1, "Title")
   highlight(3, 2, -1, "Comment")
@@ -205,15 +219,16 @@ end
 
 local function render_error(message)
   local contributor = M.state.contributor
+  local subtitle = contributor.combined and "Combined activity" or ("@" .. contributor.username)
   local lines = {
     "",
     "  " .. (contributor.name or contributor.username),
-    "  @" .. contributor.username,
+    "  " .. subtitle,
     "",
     "  Could not load activity",
     "  " .. message,
   }
-  footer(lines, "r retry   b back   o open profile   q close")
+  footer(lines, "r retry   j/b back   o open profile   q close")
   set_lines(lines)
   highlight(2, 2, -1, "Title")
   highlight(3, 2, -1, "Comment")
@@ -221,26 +236,34 @@ local function render_error(message)
   highlight(6, 2, -1, "Comment")
 end
 
-local function render_activity(events, cached)
+local function render_activity(events, cached, notice)
   local contributor = M.state.contributor
   M.state.events = events
   M.state.line_targets = {}
   local width = vim.api.nvim_win_get_width(M.state.win)
+  local subtitle = contributor.combined and "all configured contributors" or ("@" .. contributor.username)
   local lines = {
     "",
     "  " .. (contributor.name or contributor.username),
-    ("  @%s · %d recent public events%s"):format(
-      contributor.username,
+    ("  %s · %d recent public events%s"):format(
+      subtitle,
       #events,
       cached and " · cached" or ""
     ),
-    "",
   }
+  if notice then
+    lines[#lines + 1] = "  " .. notice
+  end
+  lines[#lines + 1] = ""
 
+  local first_event_line
   for _, event in ipairs(events) do
     local item = actions.describe(event)
     local event_line = #lines + 1
-    lines[event_line] = trim_to_width(("  %s  %s"):format(item.icon, item.text), width - 2)
+    first_event_line = first_event_line or event_line
+    local actor = event._pantheon_contributor
+    local actor_prefix = actor and ((actor.name or actor.username) .. " · ") or ""
+    lines[event_line] = trim_to_width(("  %s  %s%s"):format(item.icon, actor_prefix, item.text), width - 2)
     lines[#lines + 1] = "     " .. relative_time(event.created_at)
     if item.detail then
       lines[#lines + 1] = trim_to_width("     “" .. item.detail .. "”", width - 2)
@@ -256,11 +279,14 @@ local function render_activity(events, cached)
   if #events == 0 then
     lines[#lines + 1] = "  No recent public activity was returned."
   end
-  footer(lines, "o open event   r refresh   b back   q close")
+  footer(lines, "i/k move   l/↵ open event   r refresh   j/b back   q close")
   set_lines(lines)
 
   highlight(2, 2, -1, "Title")
   highlight(3, 2, -1, "Comment")
+  if notice then
+    highlight(4, 2, -1, "DiagnosticWarn")
+  end
   for line, _ in pairs(M.state.line_targets) do
     if lines[line]:match("^  .  ") then
       highlight(line, 2, 3, "Special")
@@ -270,8 +296,8 @@ local function render_activity(events, cached)
     end
   end
   highlight(#lines, 2, -1, "Comment")
-  if #events > 0 then
-    vim.api.nvim_win_set_cursor(M.state.win, { 5, 0 })
+  if first_event_line then
+    vim.api.nvim_win_set_cursor(M.state.win, { first_event_line, 0 })
   end
 end
 
@@ -283,16 +309,22 @@ local function load_activity(contributor, force)
   render_loading(contributor)
 
   local request_opts = vim.tbl_extend("force", M.state.opts, { force = force or false })
-  github.events(contributor.username, request_opts, function(events, err, cached)
+  local callback = function(events, err, cached, notice)
     if request_id ~= M.state.request_id or not is_valid_win(M.state.win) then
       return
     end
     if err then
       render_error(err)
     else
-      render_activity(events, cached)
+      render_activity(events, cached, notice)
     end
-  end)
+  end
+
+  if contributor.combined then
+    github.events_many(contributor.contributors, request_opts, callback)
+  else
+    github.events(contributor.username, request_opts, callback)
+  end
 end
 
 local function target_on_cursor()
@@ -331,7 +363,7 @@ end
 local function open_current()
   local target = target_on_cursor()
   if M.state.view == "contributors" and type(target) == "table" then
-    open_url("https://github.com/" .. target.username)
+    open_url(target.combined and "https://github.com" or ("https://github.com/" .. target.username))
   elseif M.state.view == "activity" then
     if type(target) == "string" then
       open_url(target)
@@ -375,6 +407,13 @@ local function move_cursor(direction)
   vim.api.nvim_win_set_cursor(M.state.win, { selected, 0 })
 end
 
+local function go_back()
+  if M.state.view == "activity" then
+    M.state.request_id = M.state.request_id + 1
+    render_contributors()
+  end
+end
+
 local function map_keys(buf)
   local map = function(lhs, rhs, desc)
     vim.keymap.set("n", lhs, rhs, { buffer = buf, nowait = true, silent = true, desc = desc })
@@ -382,28 +421,31 @@ local function map_keys(buf)
   map("q", M.close, "Close Pantheon")
   map("<Esc>", M.close, "Close Pantheon")
   map("<CR>", select_current, "Select Pantheon item")
+  map("l", select_current, "Move right in Pantheon")
   map("o", open_current, "Open Pantheon item in browser")
-  map("j", function()
-    move_cursor(1)
-  end, "Select next Pantheon contributor")
-  map("k", function()
+  map("i", function()
     move_cursor(-1)
-  end, "Select previous Pantheon contributor")
+  end, "Move up in Pantheon")
+  map("k", function()
+    move_cursor(1)
+  end, "Move down in Pantheon")
+  map("j", go_back, "Move left in Pantheon")
   map("<Down>", function()
     move_cursor(1)
   end, "Select next Pantheon contributor")
   map("<Up>", function()
     move_cursor(-1)
   end, "Select previous Pantheon contributor")
-  map("b", function()
-    if M.state.view == "activity" then
-      M.state.request_id = M.state.request_id + 1
-      render_contributors()
-    end
-  end, "Return to Pantheon contributors")
+  map("b", go_back, "Return to Pantheon contributors")
   map("r", function()
     if M.state.view == "activity" and M.state.contributor then
-      github.clear(M.state.contributor.username)
+      if M.state.contributor.combined then
+        for _, contributor in ipairs(M.state.contributor.contributors) do
+          github.clear(contributor.username)
+        end
+      else
+        github.clear(M.state.contributor.username)
+      end
       load_activity(M.state.contributor, true)
     end
   end, "Refresh Pantheon activity")

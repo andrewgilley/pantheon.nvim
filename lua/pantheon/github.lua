@@ -87,6 +87,56 @@ function M.events(username, opts, callback)
   end)
 end
 
+function M.events_many(contributors, opts, callback)
+  if #contributors == 0 then
+    vim.schedule(function()
+      callback({}, nil, true)
+    end)
+    return
+  end
+
+  local pending = #contributors
+  local merged = {}
+  local errors = {}
+  local all_cached = true
+
+  for _, contributor in ipairs(contributors) do
+    M.events(contributor.username, opts, function(events, err, cached)
+      all_cached = all_cached and cached == true
+      if err then
+        errors[#errors + 1] = contributor.username .. ": " .. err
+      else
+        for _, event in ipairs(events) do
+          local item = vim.tbl_extend("force", {}, event)
+          item._pantheon_contributor = contributor
+          merged[#merged + 1] = item
+        end
+      end
+
+      pending = pending - 1
+      if pending ~= 0 then
+        return
+      end
+
+      table.sort(merged, function(left, right)
+        return (left.created_at or "") > (right.created_at or "")
+      end)
+
+      local limit = opts.combined_limit or 100
+      if #merged > limit then
+        merged = vim.list_slice(merged, 1, limit)
+      end
+
+      if #merged == 0 and #errors > 0 then
+        callback(nil, table.concat(errors, "; "), false)
+      else
+        local notice = #errors > 0 and ("Could not load " .. #errors .. " contributor feeds") or nil
+        callback(merged, nil, all_cached, notice)
+      end
+    end)
+  end
+end
+
 function M.clear(username)
   cache[username] = nil
 end

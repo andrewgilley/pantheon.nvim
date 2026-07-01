@@ -14,6 +14,7 @@ people whose work is worth following.
 require("pantheon").setup({
   width = 0.9,
   height = 0.88,
+  combined_limit = 100,
   contributors = {
     {
       name = "Mitchell Hashimoto",
@@ -70,6 +71,11 @@ require("pantheon").setup({
       username = "Jarred-Sumner",
       description = "Creator of the Bun JavaScript runtime and toolkit",
     },
+    {
+      name = "shadcn",
+      username = "shadcn",
+      description = "Creator of shadcn/ui and open-code interface tooling",
+    },
   },
 })
 ```
@@ -78,6 +84,8 @@ Run `:PantheonOpen`, `:PantheonClose`, or `:PantheonToggle`.
 
 Inside Pantheon:
 
+- Select `All contributors` to merge every configured user's events into one chronological feed.
+- `i`, `k`, `j`, and `l` move up, down, left/back, and right/select.
 - `<CR>` selects a contributor or opens an activity item.
 - `o` opens the selected profile or activity item in your browser.
 - `r` bypasses the five-minute cache and refreshes activity.
