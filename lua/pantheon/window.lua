@@ -105,15 +105,16 @@ local function activity_line(icon, title, timestamp, width)
   return prefix .. suffix
 end
 
-local function display_contributors(contributors, randomize)
+local function display_contributors(contributors)
   local result = vim.list_extend({}, contributors or {})
-  if not randomize then
-    return result
-  end
-  for index = #result, 2, -1 do
-    local other = (vim.fn.rand() % index) + 1
-    result[index], result[other] = result[other], result[index]
-  end
+  table.sort(result, function(left, right)
+    local left_name = (left.name or left.username):lower()
+    local right_name = (right.name or right.username):lower()
+    if left_name == right_name then
+      return left.username:lower() < right.username:lower()
+    end
+    return left_name < right_name
+  end)
   return result
 end
 
@@ -344,7 +345,8 @@ local function render_contributors()
   if #contributors == 0 then
     lines[#lines + 1] = "  No contributors configured."
   end
-  footer(lines, "i/k move   l open   f types   F global")
+  lines[#lines + 1] = "  " .. string.rep("─", math.max(1, left_width - 2))
+  lines[#lines + 1] = "  i/k move   l open   f types   F global"
   set_lines(lines)
   vim.wo[M.state.win].cursorline = false
 
@@ -358,6 +360,7 @@ local function render_contributors()
       highlight(line, username_start - 1, username_start + username_width, "Identifier")
     end
   end
+  highlight(#lines - 1, 2, -1, "WinSeparator")
   highlight(#lines, 2, -1, "Comment")
 
   if M.state.line_targets[6] and is_valid_win(M.state.win) then
@@ -787,7 +790,7 @@ function M.open(opts)
   local win = vim.api.nvim_open_win(buf, true, make_win_config(M.state.opts))
   M.state.buf = buf
   M.state.win = win
-  M.state.contributors = display_contributors(M.state.opts.contributors, M.state.opts.randomize ~= false)
+  M.state.contributors = display_contributors(M.state.opts.contributors)
 
   vim.wo[win].wrap = false
   vim.wo[win].cursorline = true

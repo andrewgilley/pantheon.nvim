@@ -10,7 +10,6 @@ local defaults = {
   push_detail_limit = 10,
   cache_ttl = 300,
   request_timeout = 15,
-  randomize = true,
   activity_types = nil,
   user_activity_types = {},
   persist_filters = true,
