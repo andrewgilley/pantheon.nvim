@@ -43,7 +43,7 @@ local function dimension(value, total, fallback, minimum)
 end
 
 local function make_win_config(opts)
-  local width = dimension(opts.width, vim.o.columns, 0.91, 54)
+  local width = dimension(opts.width, vim.o.columns, 0.89, 54)
   local height = dimension(opts.height, vim.o.lines, 0.80, 16)
   local row = math.max(0, math.min(opts.row or 1, vim.o.lines - height - 2))
 
