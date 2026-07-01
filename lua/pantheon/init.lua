@@ -8,6 +8,12 @@ local defaults = {
   per_page = 30,
   cache_ttl = 300,
   request_timeout = 15,
+  randomize = true,
+  activity_types = nil,
+  user_activity_types = {},
+  persist_filters = true,
+  state_file = vim.fn.stdpath("state") .. "/pantheon.json",
+  browser_command = nil,
   token = nil,
   contributors = {
     {
@@ -145,6 +151,17 @@ function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", vim.deepcopy(defaults), opts or {})
   if opts and opts.contributors then
     M.config.contributors = vim.deepcopy(opts.contributors)
+  end
+  if M.config.persist_filters then
+    local saved = require("pantheon.storage").load(M.config.state_file)
+    if saved then
+      if saved.activity_types ~= nil then
+        M.config.activity_types = saved.activity_types
+      end
+      if type(saved.user_activity_types) == "table" then
+        M.config.user_activity_types = saved.user_activity_types
+      end
+    end
   end
 end
 

@@ -32,6 +32,46 @@ local icons = {
   WatchEvent = "★",
 }
 
+M.event_types = {
+  "PushEvent",
+  "PullRequestEvent",
+  "PullRequestReviewEvent",
+  "PullRequestReviewCommentEvent",
+  "IssuesEvent",
+  "IssueCommentEvent",
+  "CommitCommentEvent",
+  "CreateEvent",
+  "DeleteEvent",
+  "ForkEvent",
+  "WatchEvent",
+  "ReleaseEvent",
+  "GollumEvent",
+  "MemberEvent",
+  "PublicEvent",
+}
+
+local type_names = {
+  PushEvent = "Pushes",
+  PullRequestEvent = "Pull requests",
+  PullRequestReviewEvent = "Pull request reviews",
+  PullRequestReviewCommentEvent = "Review comments",
+  IssuesEvent = "Issues",
+  IssueCommentEvent = "Issue comments",
+  CommitCommentEvent = "Commit comments",
+  CreateEvent = "Branches and tags created",
+  DeleteEvent = "Branches and tags deleted",
+  ForkEvent = "Forks",
+  WatchEvent = "Stars",
+  ReleaseEvent = "Releases",
+  GollumEvent = "Wiki changes",
+  MemberEvent = "Collaborator changes",
+  PublicEvent = "Repositories made public",
+}
+
+function M.type_label(event_type)
+  return type_names[event_type] or event_type:gsub("Event$", "")
+end
+
 local function value(root, ...)
   local current = root
   for _, key in ipairs({ ... }) do
@@ -150,6 +190,25 @@ function M.describe(event)
     detail = detail(event),
     url = event_url(event),
   }
+end
+
+function M.filter(events, activity_types)
+  if activity_types == nil then
+    return events
+  end
+
+  local allowed = {}
+  for _, event_type in ipairs(activity_types) do
+    allowed[event_type] = true
+  end
+
+  local filtered = {}
+  for _, event in ipairs(events) do
+    if allowed[event.type] then
+      filtered[#filtered + 1] = event
+    end
+  end
+  return filtered
 end
 
 return M

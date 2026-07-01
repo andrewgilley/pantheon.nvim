@@ -14,6 +14,11 @@ people whose work is worth following.
 require("pantheon").setup({
   width = 0.9,
   height = 0.88,
+  randomize = true,
+  activity_types = nil,
+  user_activity_types = {},
+  persist_filters = true,
+  browser_command = nil,
   contributors = {
     {
       name = "Mitchell Hashimoto",
@@ -139,6 +144,9 @@ Run `:PantheonOpen`, `:PantheonClose`, or `:PantheonToggle`.
 Inside Pantheon:
 
 - `i`, `k`, `j`, and `l` move up, down, left/back, and right/select.
+- `f` opens the activity-type checklist for the selected contributor.
+- `F` opens the global activity-type checklist.
+- In a checklist, `<Space>`, `l`, or `<CR>` toggles a checkbox; `a` enables all and `n` disables all.
 - `<CR>` selects a contributor or opens an activity item.
 - `o` opens the selected profile or activity item in your browser.
 - `r` bypasses the five-minute cache and refreshes activity.
@@ -152,3 +160,48 @@ than storing credentials in your Neovim configuration.
 
 GitHub public events are not real-time and can be delayed. Only public activity
 is shown.
+
+## Activity filters
+
+Use GitHub event type names to choose which activity Pantheon reports. A global
+allowlist applies to everyone, and a username-specific allowlist overrides it:
+
+```lua
+require("pantheon").setup({
+  activity_types = {
+    "PushEvent",
+    "PullRequestEvent",
+    "IssuesEvent",
+    "ReleaseEvent",
+  },
+  user_activity_types = {
+    mitchellh = { "PushEvent", "ReleaseEvent" },
+    dtolnay = { "PushEvent", "PullRequestEvent" },
+  },
+})
+```
+
+Omit `activity_types` to show every event type. Set either allowlist to `{}` to
+show no activity in that scope. Filters affect the initial preview and full
+activity window.
+
+Checkbox changes are saved to `stdpath("state")/pantheon.json` and restored on
+the next `setup()` call. Set `persist_filters = false` to keep changes for the
+current session only, or set `state_file` to use another location.
+
+Common values are `PushEvent`, `PullRequestEvent`, `PullRequestReviewEvent`,
+`PullRequestReviewCommentEvent`, `IssuesEvent`, `IssueCommentEvent`,
+`CommitCommentEvent`, `CreateEvent`, `DeleteEvent`, `ForkEvent`, `WatchEvent`,
+`ReleaseEvent`, `GollumEvent`, `MemberEvent`, and `PublicEvent`.
+
+## Browser windows
+
+Pantheon detects Chrome, Edge, or Firefox and launches links in a new browser
+window. To choose a browser explicitly, provide its command and new-window flag;
+Pantheon appends the URL:
+
+```lua
+require("pantheon").setup({
+  browser_command = { "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "--new-window" },
+})
+```

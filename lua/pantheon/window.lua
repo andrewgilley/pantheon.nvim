@@ -1,6 +1,7 @@
 local M = {}
 
 local actions = require("pantheon.actions")
+local browser = require("pantheon.browser")
 local github = require("pantheon.github")
 
 local ns = vim.api.nvim_create_namespace("pantheon")
@@ -17,6 +18,8 @@ M.state = {
   preview_request_id = 0,
   preview_key = nil,
   preview_items = nil,
+  contributors = {},
+  filter_scope = nil,
   opts = {},
 }
 
@@ -90,6 +93,18 @@ end
 local function pad_cell(text, width)
   local value = trim_to_width(text, width)
   return value .. string.rep(" ", math.max(0, width - vim.fn.strdisplaywidth(value)))
+end
+
+local function display_contributors(contributors, randomize)
+  local result = vim.list_extend({}, contributors or {})
+  if not randomize then
+    return result
+  end
+  for index = #result, 2, -1 do
+    local other = (vim.fn.rand() % index) + 1
+    result[index], result[other] = result[other], result[index]
+  end
+  return result
 end
 
 local function relative_time(timestamp)
@@ -192,14 +207,27 @@ local function preview_items(contributor, events, err, cached)
   end
 
   local line = 10
-  for index = 1, math.min(3, #events) do
+  for index = 1, math.min(5, #events) do
     local event = events[index]
     local item = actions.describe(event)
     items[line] = { item.icon .. "  " .. item.text, "NormalFloat" }
     items[line + 1] = { relative_time(event.created_at), "Comment" }
-    line = line + 3
+    line = line + 2
   end
   return items
+end
+
+local function activity_types_for(contributor)
+  local overrides = M.state.opts.user_activity_types or {}
+  local username = contributor.username
+  local user_types = overrides[username] or overrides[username:lower()]
+  if user_types ~= nil then
+    return user_types
+  end
+  if contributor.activity_types ~= nil then
+    return contributor.activity_types
+  end
+  return M.state.opts.activity_types
 end
 
 local function queue_preview(contributor)
@@ -225,7 +253,8 @@ local function queue_preview(contributor)
       if request_id ~= M.state.preview_request_id or M.state.view ~= "contributors" then
         return
       end
-      render_preview_panel(preview_items(contributor, events, err, cached))
+      local filtered = events and actions.filter(events, activity_types_for(contributor)) or nil
+      render_preview_panel(preview_items(contributor, filtered, err, cached))
     end)
   end, 150)
 end
@@ -245,7 +274,7 @@ local function render_contributors()
     "",
   }
 
-  local contributors = M.state.opts.contributors or {}
+  local contributors = M.state.contributors
   local index_width = #tostring(math.max(#contributors, 1))
   local left_width = preview_left_width(vim.api.nvim_win_get_width(M.state.win))
   local name_width = 4
@@ -277,7 +306,7 @@ local function render_contributors()
   if #contributors == 0 then
     lines[#lines + 1] = "  No contributors configured."
   end
-  footer(lines, "i/k move   l open   q close")
+  footer(lines, "i/k move   l open   f types   F global")
   set_lines(lines)
 
   highlight(2, 2, -1, "Title")
@@ -296,6 +325,121 @@ local function render_contributors()
     vim.api.nvim_win_set_cursor(M.state.win, { 6, 0 })
     queue_preview(M.state.line_targets[6])
   end
+end
+
+local function filter_type_set(scope)
+  local types
+  if scope.global then
+    types = M.state.opts.activity_types
+  else
+    types = activity_types_for(scope)
+  end
+
+  local enabled = {}
+  if types == nil then
+    for _, event_type in ipairs(actions.event_types) do
+      enabled[event_type] = true
+    end
+  else
+    for _, event_type in ipairs(types) do
+      enabled[event_type] = true
+    end
+  end
+  return enabled
+end
+
+local function save_filter_type_set(scope, enabled)
+  local types = {}
+  for _, event_type in ipairs(actions.event_types) do
+    if enabled[event_type] then
+      types[#types + 1] = event_type
+    end
+  end
+
+  if scope.global then
+    M.state.opts.activity_types = types
+  else
+    M.state.opts.user_activity_types = M.state.opts.user_activity_types or {}
+    M.state.opts.user_activity_types[scope.username] = types
+  end
+
+  if M.state.opts.persist_filters then
+    local ok, err = require("pantheon.storage").save(M.state.opts.state_file, M.state.opts)
+    if not ok then
+      vim.notify("Pantheon could not save activity filters: " .. tostring(err), vim.log.levels.ERROR)
+    end
+  end
+end
+
+local function render_filters(scope, selected_type)
+  M.state.view = "filters"
+  M.state.filter_scope = scope
+  M.state.line_targets = {}
+  M.state.preview_request_id = M.state.preview_request_id + 1
+
+  local scope_name = scope.global and "All contributors" or ((scope.name or scope.username) .. " · @" .. scope.username)
+  local enabled = filter_type_set(scope)
+  local lines = {
+    "",
+    "  ACTIVITY TYPES",
+    "  " .. scope_name,
+    "  Checked event kinds are shown in previews and activity feeds.",
+    "",
+  }
+
+  local selected_line
+  for _, event_type in ipairs(actions.event_types) do
+    local line = #lines + 1
+    local checkbox = enabled[event_type] and "[x]" or "[ ]"
+    lines[line] = ("  %s  %-28s %s"):format(checkbox, actions.type_label(event_type), event_type)
+    M.state.line_targets[line] = { event_type = event_type }
+    if event_type == selected_type then
+      selected_line = line
+    end
+  end
+  footer(lines, "i/k move   space/l toggle   a all   n none   j back")
+  set_lines(lines)
+
+  highlight(2, 2, -1, "Title")
+  highlight(3, 2, -1, "Identifier")
+  highlight(4, 2, -1, "Comment")
+  for line, target in pairs(M.state.line_targets) do
+    highlight(line, 2, 5, enabled[target.event_type] and "DiagnosticOk" or "Comment")
+    highlight(line, 7, 35, "Function")
+    highlight(line, 36, -1, "Comment")
+  end
+  highlight(#lines, 2, -1, "Comment")
+
+  vim.api.nvim_win_set_cursor(M.state.win, { selected_line or 6, 0 })
+end
+
+local function toggle_filter_type()
+  if M.state.view ~= "filters" then
+    return
+  end
+  local line = vim.api.nvim_win_get_cursor(M.state.win)[1]
+  local target = M.state.line_targets[line]
+  if not target or not target.event_type then
+    return
+  end
+  local enabled = filter_type_set(M.state.filter_scope)
+  enabled[target.event_type] = not enabled[target.event_type]
+  save_filter_type_set(M.state.filter_scope, enabled)
+  render_filters(M.state.filter_scope, target.event_type)
+end
+
+local function set_all_filter_types(value)
+  if M.state.view ~= "filters" then
+    return
+  end
+  local line = vim.api.nvim_win_get_cursor(M.state.win)[1]
+  local target = M.state.line_targets[line]
+  local enabled = {}
+  for _, event_type in ipairs(actions.event_types) do
+    enabled[event_type] = value
+  end
+  save_filter_type_set(M.state.filter_scope, enabled)
+  render_filters(M.state.filter_scope, target and target.event_type or nil)
 end
 
 local function render_loading(contributor)
@@ -370,7 +514,7 @@ local function render_activity(events, cached, notice)
   if #events == 0 then
     lines[#lines + 1] = "  No recent public activity was returned."
   end
-  footer(lines, "i/k move   l/↵ open event   r refresh   j/b back   q close")
+  footer(lines, "i/k move   l/↵ open   f types   F global   r refresh   j/b back   q close")
   set_lines(lines)
 
   highlight(2, 2, -1, "Title")
@@ -407,7 +551,7 @@ local function load_activity(contributor, force)
     if err then
       render_error(err)
     else
-      render_activity(events, cached, notice)
+      render_activity(actions.filter(events, activity_types_for(contributor)), cached, notice)
     end
   end
 
@@ -432,7 +576,7 @@ local function target_on_cursor()
 end
 
 local function open_url(url)
-  local ok, err = vim.ui.open(url)
+  local ok, err = browser.open(url, M.state.opts)
   if not ok and err then
     vim.notify("Pantheon: " .. tostring(err), vim.log.levels.ERROR)
   end
@@ -444,6 +588,25 @@ local function select_current()
     load_activity(target, false)
   elseif M.state.view == "activity" and type(target) == "string" then
     open_url(target)
+  elseif M.state.view == "filters" then
+    toggle_filter_type()
+  end
+end
+
+local function open_filters(global)
+  if global then
+    render_filters({ global = true })
+    return
+  end
+
+  local contributor
+  if M.state.view == "contributors" then
+    contributor = target_on_cursor()
+  elseif M.state.view == "activity" then
+    contributor = M.state.contributor
+  end
+  if type(contributor) == "table" and contributor.username then
+    render_filters(contributor)
   end
 end
 
@@ -461,7 +624,7 @@ local function open_current()
 end
 
 local function move_cursor(direction)
-  if M.state.view ~= "contributors" then
+  if M.state.view ~= "contributors" and M.state.view ~= "filters" then
     vim.cmd.normal({ direction > 0 and "j" or "k", bang = true })
     return
   end
@@ -496,7 +659,7 @@ local function move_cursor(direction)
 end
 
 local function go_back()
-  if M.state.view == "activity" then
+  if M.state.view == "activity" or M.state.view == "filters" then
     M.state.request_id = M.state.request_id + 1
     render_contributors()
   end
@@ -510,7 +673,20 @@ local function map_keys(buf)
   map("<Esc>", M.close, "Close Pantheon")
   map("<CR>", select_current, "Select Pantheon item")
   map("l", select_current, "Move right in Pantheon")
+  map("<Space>", toggle_filter_type, "Toggle Pantheon activity type")
   map("o", open_current, "Open Pantheon item in browser")
+  map("f", function()
+    open_filters(false)
+  end, "Edit contributor activity types")
+  map("F", function()
+    open_filters(true)
+  end, "Edit global activity types")
+  map("a", function()
+    set_all_filter_types(true)
+  end, "Enable all Pantheon activity types")
+  map("n", function()
+    set_all_filter_types(false)
+  end, "Disable all Pantheon activity types")
   map("i", function()
     move_cursor(-1)
   end, "Move up in Pantheon")
@@ -546,6 +722,8 @@ function M.close()
   M.state.line_targets = {}
   M.state.preview_key = nil
   M.state.preview_items = nil
+  M.state.contributors = {}
+  M.state.filter_scope = nil
 end
 
 function M.open(opts)
@@ -559,6 +737,7 @@ function M.open(opts)
   local win = vim.api.nvim_open_win(buf, true, make_win_config(M.state.opts))
   M.state.buf = buf
   M.state.win = win
+  M.state.contributors = display_contributors(M.state.opts.contributors, M.state.opts.randomize ~= false)
 
   vim.wo[win].wrap = false
   vim.wo[win].cursorline = true
