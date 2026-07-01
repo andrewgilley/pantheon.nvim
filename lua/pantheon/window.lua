@@ -207,7 +207,7 @@ local function preview_items(contributor, events, err, cached)
   end
 
   local line = 10
-  for index = 1, math.min(5, #events) do
+  for index = 1, math.min(8, #events) do
     local event = events[index]
     local item = actions.describe(event)
     items[line] = { item.icon .. "  " .. item.text, "NormalFloat" }

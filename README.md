@@ -56,11 +56,6 @@ require("pantheon").setup({
       description = "Creator of the Odin programming language",
     },
     {
-      name = "Chris Lattner",
-      username = "lattner",
-      description = "Creator of LLVM, Clang, Swift, and Mojo",
-    },
-    {
       name = "Jon Gjengset",
       username = "jonhoo",
       description = "Rust educator and distributed systems engineer",

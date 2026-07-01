@@ -8,7 +8,7 @@ local storage = require("pantheon.storage")
 pantheon.setup({ persist_filters = false })
 local expected_contributors = {
   "mitchellh", "lukewagner", "matklad", "ThePrimeagen", "tjdevries", "ryanfleury",
-  "gingerBill", "lattner", "jonhoo", "Jarred-Sumner", "shadcn", "karpathy",
+  "gingerBill", "jonhoo", "Jarred-Sumner", "shadcn", "karpathy",
   "earthtojake", "folke", "rockorager", "simonw", "stevearc",
   "charliermarsh", "BurntSushi", "carllerche", "ggerganov",
   "dtolnay",
