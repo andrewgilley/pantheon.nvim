@@ -12,9 +12,9 @@ people whose work is worth following.
 
 ```lua
 require("pantheon").setup({
-  width = 0.9,
-  height = 0.88,
-  row = 3,
+  width = 0.94,
+  height = 0.82,
+  row = 2,
   randomize = true,
   push_detail_limit = 10,
   activity_types = nil,
