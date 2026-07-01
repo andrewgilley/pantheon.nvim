@@ -131,7 +131,7 @@ local function relative_time(timestamp)
 end
 
 local function footer(lines, text)
-  lines[#lines + 1] = ""
+  -- lines[#lines + 1] = ""
   lines[#lines + 1] = "  " .. text
 end
 
