@@ -43,9 +43,9 @@ local function dimension(value, total, fallback, minimum)
 end
 
 local function make_win_config(opts)
-  local width = dimension(opts.width, vim.o.columns, 0.94, 54)
-  local height = dimension(opts.height, vim.o.lines, 0.82, 16)
-  local row = math.max(0, math.min(opts.row or 2, vim.o.lines - height - 2))
+  local width = dimension(opts.width, vim.o.columns, 0.91, 54)
+  local height = dimension(opts.height, vim.o.lines, 0.80, 16)
+  local row = math.max(0, math.min(opts.row or 1, vim.o.lines - height - 2))
 
   return {
     relative = "editor",
@@ -792,8 +792,11 @@ function M.open(opts)
   vim.wo[win].wrap = false
   vim.wo[win].cursorline = true
   vim.wo[win].cursorlineopt = "line"
+  vim.api.nvim_set_hl(0, "PantheonNormal", { bg = "NONE" })
   vim.api.nvim_set_hl(0, "PantheonBorder", { fg = "#ffffff", bg = "NONE" })
   vim.wo[win].winhighlight = table.concat({
+    "Normal:PantheonNormal",
+    "NormalFloat:PantheonNormal",
     "CursorLine:PmenuSel",
     "FloatBorder:PantheonBorder",
     "FloatTitle:PantheonBorder",

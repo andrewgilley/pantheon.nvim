@@ -1,9 +1,9 @@
 local M = {}
 
 local defaults = {
-  width = 0.94,
-  height = 0.82,
-  row = 2,
+  width = 0.91,
+  height = 0.80,
+  row = 1,
   border = "rounded",
   title = " Pantheon ",
   per_page = 30,
