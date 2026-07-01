@@ -44,12 +44,13 @@ end
 local function make_win_config(opts)
   local width = dimension(opts.width, vim.o.columns, 0.9, 54)
   local height = dimension(opts.height, vim.o.lines, 0.88, 16)
+  local row = math.max(0, math.min(opts.row or 1, vim.o.lines - height - 2))
 
   return {
     relative = "editor",
     width = width,
     height = height,
-    row = math.floor((vim.o.lines - height) / 2),
+    row = row,
     col = math.floor((vim.o.columns - width) / 2),
     style = "minimal",
     border = opts.border or "rounded",

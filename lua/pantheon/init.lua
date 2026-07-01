@@ -3,6 +3,7 @@ local M = {}
 local defaults = {
   width = 0.9,
   height = 0.88,
+  row = 1,
   border = "rounded",
   title = " Pantheon ",
   per_page = 30,
@@ -41,12 +42,6 @@ local defaults = {
     },
 
     {
-      name = "TJ DeVries",
-      username = "tjdevries",
-      description = "Neovim core contributor and original creator of Telescope.nvim",
-    },
-
-    {
       name = "Ryan Fleury",
       username = "ryanfleury",
       description = "Systems programming, debuggers, and data-oriented tools",
@@ -74,12 +69,6 @@ local defaults = {
       name = "shadcn",
       username = "shadcn",
       description = "Creator of shadcn/ui and open-code interface tooling",
-    },
-
-    {
-      name = "Andrej Karpathy",
-      username = "karpathy",
-      description = "AI researcher and creator of nanoGPT, llm.c, and micrograd",
     },
 
     {

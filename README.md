@@ -14,6 +14,7 @@ people whose work is worth following.
 require("pantheon").setup({
   width = 0.9,
   height = 0.88,
+  row = 1,
   randomize = true,
   activity_types = nil,
   user_activity_types = {},
@@ -39,11 +40,6 @@ require("pantheon").setup({
       name = "ThePrimeagen",
       username = "ThePrimeagen",
       description = "Vim, developer tooling, and performance-focused programming",
-    },
-    {
-      name = "TJ DeVries",
-      username = "tjdevries",
-      description = "Neovim core contributor and original creator of Telescope.nvim",
     },
     {
       name = "Ryan Fleury",
@@ -74,11 +70,6 @@ require("pantheon").setup({
       name = "shadcn",
       username = "shadcn",
       description = "Creator of shadcn/ui and open-code interface tooling",
-    },
-    {
-      name = "Andrej Karpathy",
-      username = "karpathy",
-      description = "AI researcher and creator of nanoGPT, llm.c, and micrograd",
     },
     {
       name = "Jake Fitzgerald",

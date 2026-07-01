@@ -7,8 +7,8 @@ local storage = require("pantheon.storage")
 
 pantheon.setup({ persist_filters = false })
 local expected_contributors = {
-  "mitchellh", "lukewagner", "matklad", "ThePrimeagen", "tjdevries", "ryanfleury",
-  "gingerBill", "jonhoo", "Jarred-Sumner", "shadcn", "karpathy",
+  "mitchellh", "lukewagner", "matklad", "ThePrimeagen", "ryanfleury",
+  "gingerBill", "jonhoo", "Jarred-Sumner", "shadcn",
   "earthtojake", "folke", "rockorager", "simonw", "stevearc",
   "charliermarsh", "BurntSushi", "carllerche", "ggerganov",
   "dtolnay",
@@ -94,6 +94,7 @@ assert(vim.wo.cursorline)
 assert(vim.wo.cursorlineopt == "line")
 assert(vim.wo.winhighlight == "CursorLine:PmenuSel")
 assert(vim.api.nvim_win_get_width(0) >= math.floor(vim.o.columns * 0.85))
+assert(vim.api.nvim_win_get_config(0).row == 1)
 local contributor_rows = vim.api.nvim_buf_get_lines(0, 4, 5 + #expected_contributors, false)
 assert(contributor_rows[1]:find("GITHUB", 1, true))
 local rendered_contributors = table.concat(contributor_rows, "\n")
