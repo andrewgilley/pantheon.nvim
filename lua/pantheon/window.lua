@@ -6,6 +6,7 @@ local github = require("pantheon.github")
 
 local ns = vim.api.nvim_create_namespace("pantheon")
 local preview_ns = vim.api.nvim_create_namespace("pantheon_preview")
+local selection_ns = vim.api.nvim_create_namespace("pantheon_selection")
 
 M.state = {
   buf = nil,
@@ -77,6 +78,7 @@ local function set_lines(lines)
   vim.bo[M.state.buf].modifiable = false
   vim.api.nvim_buf_clear_namespace(M.state.buf, ns, 0, -1)
   vim.api.nvim_buf_clear_namespace(M.state.buf, preview_ns, 0, -1)
+  vim.api.nvim_buf_clear_namespace(M.state.buf, selection_ns, 0, -1)
   M.state.preview_items = nil
 end
 
@@ -260,6 +262,26 @@ local function queue_preview(contributor)
   end, 150)
 end
 
+local function highlight_contributor_selection()
+  if not is_valid_buf(M.state.buf) then
+    return
+  end
+  vim.api.nvim_buf_clear_namespace(M.state.buf, selection_ns, 0, -1)
+  if M.state.view ~= "contributors" or not is_valid_win(M.state.win) then
+    return
+  end
+
+  local line = vim.api.nvim_win_get_cursor(M.state.win)[1]
+  if type(M.state.line_targets[line]) ~= "table" then
+    return
+  end
+  local text = vim.api.nvim_buf_get_lines(M.state.buf, line - 1, line, false)[1] or ""
+  vim.api.nvim_buf_set_extmark(M.state.buf, selection_ns, line - 1, 0, {
+    end_col = #text,
+    hl_group = "PmenuSel",
+  })
+end
+
 local function render_contributors()
   M.state.view = "contributors"
   M.state.contributor = nil
@@ -300,7 +322,7 @@ local function render_contributors()
       pad_cell(contributor.name or contributor.username, name_width),
       pad_cell(handle, username_width)
     )
-    lines[line] = prefix
+    lines[line] = pad_cell(prefix, left_width)
     M.state.line_targets[line] = contributor
   end
 
@@ -309,6 +331,7 @@ local function render_contributors()
   end
   footer(lines, "i/k move   l open   f types   F global")
   set_lines(lines)
+  vim.wo[M.state.win].cursorline = false
 
   highlight(2, 2, -1, "Title")
   highlight(3, 2, -1, "Comment")
@@ -324,6 +347,7 @@ local function render_contributors()
 
   if M.state.line_targets[6] and is_valid_win(M.state.win) then
     vim.api.nvim_win_set_cursor(M.state.win, { 6, 0 })
+    highlight_contributor_selection()
     queue_preview(M.state.line_targets[6])
   end
 end
@@ -400,6 +424,7 @@ local function render_filters(scope, selected_type)
   end
   footer(lines, "i/k move   space/l toggle   a all   n none   j back")
   set_lines(lines)
+  vim.wo[M.state.win].cursorline = true
 
   highlight(2, 2, -1, "Title")
   highlight(3, 2, -1, "Identifier")
@@ -453,6 +478,7 @@ local function render_loading(contributor)
   }
   footer(lines, "j/b back   q close")
   set_lines(lines)
+  vim.wo[M.state.win].cursorline = true
   highlight(2, 2, -1, "Title")
   highlight(3, 2, -1, "Comment")
   highlight(5, 2, -1, "DiagnosticInfo")
@@ -470,6 +496,7 @@ local function render_error(message)
   }
   footer(lines, "r retry   j/b back   o open profile   q close")
   set_lines(lines)
+  vim.wo[M.state.win].cursorline = true
   highlight(2, 2, -1, "Title")
   highlight(3, 2, -1, "Comment")
   highlight(5, 2, -1, "DiagnosticError")
@@ -517,6 +544,7 @@ local function render_activity(events, cached, notice)
   end
   footer(lines, "i/k move   l/↵ open   f types   F global   r refresh   j/b back   q close")
   set_lines(lines)
+  vim.wo[M.state.win].cursorline = true
 
   highlight(2, 2, -1, "Title")
   highlight(3, 2, -1, "Comment")
@@ -656,6 +684,7 @@ local function move_cursor(direction)
     end
   end
   vim.api.nvim_win_set_cursor(M.state.win, { selected, 0 })
+  highlight_contributor_selection()
   queue_preview(M.state.line_targets[selected])
 end
 
@@ -772,6 +801,7 @@ function M.open(opts)
       end
       local line = vim.api.nvim_win_get_cursor(M.state.win)[1]
       local contributor = M.state.line_targets[line]
+      highlight_contributor_selection()
       if type(contributor) == "table" then
         queue_preview(contributor)
       end
