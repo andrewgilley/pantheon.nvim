@@ -1,17 +1,17 @@
-if vim.g.loaded_myfloat then
+if vim.g.loaded_pantheon then
   return
 end
 
-vim.g.loaded_myfloat = true
+vim.g.loaded_pantheon = true
 
 vim.api.nvim_create_user_command("PantheonOpen", function()
-  require("myfloat").open()
-end, {})
+  require("pantheon").open()
+end, { desc = "Open Pantheon" })
 
 vim.api.nvim_create_user_command("PantheonClose", function()
-  require("myfloat").close()
-end, {})
+  require("pantheon").close()
+end, { desc = "Close Pantheon" })
 
 vim.api.nvim_create_user_command("PantheonToggle", function()
-  require("myfloat").toggle()
-end, {})
+  require("pantheon").toggle()
+end, { desc = "Toggle Pantheon" })
