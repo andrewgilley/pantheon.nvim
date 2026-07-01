@@ -45,7 +45,7 @@ end
 local function make_win_config(opts)
   local width = dimension(opts.width, vim.o.columns, 0.8, 54)
   local height = dimension(opts.height, vim.o.lines, 0.78, 16)
-  local row = math.max(0, math.min(opts.row or 1, vim.o.lines - height - 2))
+  local row = math.max(0, math.min(opts.row or 3, vim.o.lines - height - 2))
 
   return {
     relative = "editor",
@@ -96,6 +96,13 @@ end
 local function pad_cell(text, width)
   local value = trim_to_width(text, width)
   return value .. string.rep(" ", math.max(0, width - vim.fn.strdisplaywidth(value)))
+end
+
+local function activity_line(icon, title, timestamp, width)
+  local suffix = "  ·  " .. timestamp
+  local title_width = math.max(1, width - vim.fn.strdisplaywidth(suffix))
+  local prefix = trim_to_width(("  %s  %s"):format(icon, title), title_width)
+  return prefix .. suffix
 end
 
 local function display_contributors(contributors, randomize)
@@ -213,11 +220,9 @@ local function preview_items(contributor, events, err, cached)
   for index = 1, math.min(8, #events) do
     local event = events[index]
     local item = actions.describe(event)
-    items[line] = {
-      item.icon .. "  " .. item.text .. "  ·  " .. relative_time(event.created_at),
-      "NormalFloat",
-    }
-    line = line + 1
+    items[line] = { item.icon .. "  " .. item.text, "NormalFloat" }
+    items[line + 1] = { relative_time(event.created_at), "Comment" }
+    line = line + 2
   end
   return items
 end
@@ -537,10 +542,7 @@ local function render_activity(events, cached, notice)
     local item = actions.describe(event)
     local event_line = #lines + 1
     first_event_line = first_event_line or event_line
-    lines[event_line] = trim_to_width(
-      ("  %s  %s  ·  %s"):format(item.icon, item.text, relative_time(event.created_at)),
-      width - 2
-    )
+    lines[event_line] = activity_line(item.icon, item.text, relative_time(event.created_at), width - 2)
     if item.detail then
       lines[#lines + 1] = trim_to_width("     “" .. item.detail .. "”", width - 2)
     end

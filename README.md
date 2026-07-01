@@ -14,7 +14,7 @@ people whose work is worth following.
 require("pantheon").setup({
   width = 0.9,
   height = 0.88,
-  row = 1,
+  row = 3,
   randomize = true,
   push_detail_limit = 10,
   activity_types = nil,
