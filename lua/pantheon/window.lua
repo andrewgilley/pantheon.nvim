@@ -213,9 +213,11 @@ local function preview_items(contributor, events, err, cached)
   for index = 1, math.min(8, #events) do
     local event = events[index]
     local item = actions.describe(event)
-    items[line] = { item.icon .. "  " .. item.text, "NormalFloat" }
-    items[line + 1] = { relative_time(event.created_at), "Comment" }
-    line = line + 2
+    items[line] = {
+      item.icon .. "  " .. item.text .. "  ·  " .. relative_time(event.created_at),
+      "NormalFloat",
+    }
+    line = line + 1
   end
   return items
 end
@@ -535,15 +537,16 @@ local function render_activity(events, cached, notice)
     local item = actions.describe(event)
     local event_line = #lines + 1
     first_event_line = first_event_line or event_line
-    lines[event_line] = trim_to_width(("  %s  %s"):format(item.icon, item.text), width - 2)
-    lines[#lines + 1] = "     " .. relative_time(event.created_at)
+    lines[event_line] = trim_to_width(
+      ("  %s  %s  ·  %s"):format(item.icon, item.text, relative_time(event.created_at)),
+      width - 2
+    )
     if item.detail then
       lines[#lines + 1] = trim_to_width("     “" .. item.detail .. "”", width - 2)
     end
     M.state.line_targets[event_line] = item.url
-    M.state.line_targets[event_line + 1] = item.url
     if item.detail then
-      M.state.line_targets[event_line + 2] = item.url
+      M.state.line_targets[event_line + 1] = item.url
     end
   end
 
