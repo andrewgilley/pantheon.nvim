@@ -101,7 +101,7 @@ end
 local function activity_line(icon, title, timestamp, width)
   local suffix = "  ·  " .. timestamp
   local title_width = math.max(1, width - vim.fn.strdisplaywidth(suffix))
-  local prefix = trim_to_width(("  %s  %s"):format(icon, title), title_width)
+  local prefix = trim_to_width(("   %s  %s"):format(icon, title), title_width)
   return prefix .. suffix
 end
 
@@ -542,22 +542,20 @@ local function render_activity(events, cached, notice)
   lines[#lines + 1] = ""
 
   local first_event_line
-  for index, event in ipairs(events) do
+  for _, event in ipairs(events) do
     local item = actions.describe(event)
     local event_line = #lines + 1
     first_event_line = first_event_line or event_line
     local text = item.detail and (item.text .. "  ·  “" .. item.detail .. "”") or item.text
     lines[event_line] = activity_line(item.icon, text, relative_time(event.created_at), width - 2)
     M.state.line_targets[event_line] = item.url
-    if index < #events then
-      lines[#lines + 1] = ""
-    end
   end
 
   if #events == 0 then
     lines[#lines + 1] = "  No recent public activity was returned."
   end
-  footer(lines, "i/k move   l/↵/→ open   f types   F global   r refresh   j/b/← back   q/<C-c> close")
+  lines[#lines + 1] = "  " .. string.rep("─", math.max(1, width - 4))
+  lines[#lines + 1] = "  i/k move   l/↵/→ open   f types   F global   r refresh   j/b/← back   q/<C-c> close"
   lines[#lines + 1] = ""
   set_lines(lines)
   vim.wo[M.state.win].cursorline = true
@@ -569,13 +567,14 @@ local function render_activity(events, cached, notice)
     highlight(4, 2, -1, "DiagnosticWarn")
   end
   for line, _ in pairs(M.state.line_targets) do
-    if lines[line]:match("^  .  ") then
-      highlight(line, 2, 3, "Special")
-      highlight(line, 5, -1, "Function")
+    if lines[line]:match("^   .  ") then
+      highlight(line, 3, 4, "Special")
+      highlight(line, 6, -1, "Function")
     else
       highlight(line, 5, -1, "Comment")
     end
   end
+  highlight(#lines - 2, 2, -1, "WinSeparator")
   highlight(#lines - 1, 2, -1, "Comment")
   if first_event_line then
     vim.api.nvim_win_set_cursor(M.state.win, { first_event_line, 0 })
@@ -598,8 +597,9 @@ local function load_activity(contributor, force)
       render_error(err)
     else
       local filtered = actions.filter(events, activity_types_for(contributor))
-      render_activity(filtered, cached, notice)
-      github.enrich_pushes(filtered, request_opts, function(enriched)
+      local results = vim.list_slice(filtered, 1, M.state.opts.results_limit or 20)
+      render_activity(results, cached, notice)
+      github.enrich_pushes(results, request_opts, function(enriched)
         if request_id ~= M.state.request_id or M.state.view ~= "activity" then
           return
         end

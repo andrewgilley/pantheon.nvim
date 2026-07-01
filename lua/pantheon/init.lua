@@ -7,6 +7,7 @@ local defaults = {
   border = "rounded",
   title = " Pantheon ",
   per_page = 30,
+  results_limit = 20,
   push_detail_limit = 10,
   cache_ttl = 300,
   request_timeout = 15,

@@ -15,6 +15,7 @@ require("pantheon").setup({
   width = 0.91,
   height = 0.80,
   row = 1,
+  results_limit = 20,
   push_detail_limit = 10,
   activity_types = nil,
   user_activity_types = {},
