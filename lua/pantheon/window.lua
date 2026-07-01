@@ -387,7 +387,6 @@ local function render_activity(events, cached, notice)
     if item.detail then
       lines[#lines + 1] = trim_to_width("     “" .. item.detail .. "”", width - 2)
     end
-    lines[#lines + 1] = ""
     M.state.line_targets[event_line] = item.url
     M.state.line_targets[event_line + 1] = item.url
     if item.detail then
