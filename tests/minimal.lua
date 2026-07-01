@@ -83,7 +83,7 @@ github.events = original_events
 
 pantheon.open()
 assert(vim.bo.filetype == "pantheon")
-assert(vim.api.nvim_buf_get_lines(0, 1, 2, false)[1]:find("PEOPLE WORTH FOLLOWING", 1, true))
+assert(vim.api.nvim_buf_get_lines(0, 1, 2, false)[1]:find("COMMUNITY FIGURES", 1, true))
 assert(vim.wo.cursorline)
 assert(vim.wo.cursorlineopt == "line")
 assert(vim.wo.winhighlight == "CursorLine:PmenuSel")

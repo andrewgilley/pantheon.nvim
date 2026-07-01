@@ -250,9 +250,9 @@ local function render_contributors()
   M.state.preview_request_id = M.state.preview_request_id + 1
 
   local lines = {
-    "",
-    "  PEOPLE WORTH FOLLOWING",
-    "  Curated public GitHub activity",
+    -- "",
+    "  COMMUNITY FIGURES",
+    "  Public GitHub activity",
     "",
   }
 
