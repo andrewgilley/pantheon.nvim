@@ -1,7 +1,7 @@
 local M = {}
 
 local defaults = {
-  width = 0.91,
+  width = 0.90,
   height = 0.80,
   row = 1,
   border = "rounded",
@@ -17,6 +17,7 @@ local defaults = {
   browser_command = nil,
   browser_profile = vim.fn.stdpath("state") .. "/pantheon-browser",
   token = nil,
+
   contributors = {
     {
       name = "Mitchell Hashimoto",

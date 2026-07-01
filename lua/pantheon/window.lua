@@ -542,13 +542,16 @@ local function render_activity(events, cached, notice)
   lines[#lines + 1] = ""
 
   local first_event_line
-  for _, event in ipairs(events) do
+  for index, event in ipairs(events) do
     local item = actions.describe(event)
     local event_line = #lines + 1
     first_event_line = first_event_line or event_line
     local text = item.detail and (item.text .. "  ·  “" .. item.detail .. "”") or item.text
     lines[event_line] = activity_line(item.icon, text, relative_time(event.created_at), width - 2)
     M.state.line_targets[event_line] = item.url
+    if index < #events then
+      lines[#lines + 1] = ""
+    end
   end
 
   if #events == 0 then
@@ -558,6 +561,7 @@ local function render_activity(events, cached, notice)
   lines[#lines + 1] = ""
   set_lines(lines)
   vim.wo[M.state.win].cursorline = true
+  vim.wo[M.state.win].scrolloff = 1
 
   highlight(2, 2, -1, "Title")
   highlight(3, 2, -1, "Comment")
@@ -673,14 +677,16 @@ local function open_current()
 end
 
 local function move_cursor(direction)
-  if M.state.view ~= "contributors" and M.state.view ~= "filters" then
+  if M.state.view ~= "contributors" and M.state.view ~= "filters" and M.state.view ~= "activity" then
     vim.cmd.normal({ direction > 0 and "j" or "k", bang = true })
     return
   end
 
   local selectable = {}
   for line, target in pairs(M.state.line_targets) do
-    if type(target) == "table" then
+    local contributor_target = M.state.view ~= "activity" and type(target) == "table"
+    local activity_target = M.state.view == "activity" and type(target) == "string"
+    if contributor_target or activity_target then
       selectable[#selectable + 1] = line
     end
   end
