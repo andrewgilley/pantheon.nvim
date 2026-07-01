@@ -36,7 +36,7 @@ local defaults = {
     },
 
     {
-      name = "ThePrimeagen",
+      name = "Michael Paulson",
       username = "ThePrimeagen",
       description = "Vim, developer tooling, and performance-focused programming",
     },
@@ -48,7 +48,7 @@ local defaults = {
     },
 
     {
-      name = "Ginger Bill",
+      name = "Bill Hall",
       username = "gingerBill",
       description = "Creator of the Odin programming language",
     },
@@ -66,7 +66,7 @@ local defaults = {
     },
 
     {
-      name = "shadcn",
+      name = "Shadan Ahmed",
       username = "shadcn",
       description = "Creator of shadcn/ui and open-code interface tooling",
     },
