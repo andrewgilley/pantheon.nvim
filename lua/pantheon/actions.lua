@@ -154,6 +154,27 @@ local function detail(event)
   return nil
 end
 
+local function comment_url(comment, fallback)
+  if type(comment) ~= "table" then
+    return fallback
+  end
+  local url = comment.html_url or fallback
+  local body = type(comment.body) == "string" and comment.body or nil
+  if not body or body == "" then
+    return url
+  end
+
+  local target = body:gsub("[%c%s]+", " "):gsub("^%s+", ""):gsub("%s+$", "")
+  target = vim.fn.strcharpart(target, 0, 100)
+  if target == "" then
+    return url
+  end
+
+  local fragment, base_url = url:match("#(.+)$"), url:gsub("#.*$", "")
+  local anchor = fragment and (fragment .. ":~:text=") or ":~:text="
+  return base_url .. "#" .. anchor .. vim.uri_encode(target)
+end
+
 local function event_url(event)
   local repo = value(event, "repo", "name")
   if not repo then
@@ -166,11 +187,13 @@ local function event_url(event)
     local number = value(payload, "pull_request", "number") or payload.number
     return number and (base .. "/pull/" .. number) or base
   elseif event.type == "IssueCommentEvent" then
-    return value(payload, "comment", "html_url") or base
+    return comment_url(payload.comment, base)
   elseif event.type == "PullRequestReviewEvent" then
     return value(payload, "review", "html_url") or value(payload, "pull_request", "html_url") or base
   elseif event.type == "PullRequestReviewCommentEvent" then
-    return value(payload, "comment", "html_url") or value(payload, "pull_request", "html_url") or base
+    return comment_url(payload.comment, value(payload, "pull_request", "html_url") or base)
+  elseif event.type == "CommitCommentEvent" then
+    return comment_url(payload.comment, base)
   elseif event.type == "IssuesEvent" then
     local number = value(payload, "issue", "number")
     return number and (base .. "/issues/" .. number) or base
