@@ -1,5 +1,17 @@
 local M = {}
 
+local function windows_edge()
+  for _, variable in ipairs({ "PROGRAMFILES(X86)", "PROGRAMFILES", "LOCALAPPDATA" }) do
+    local root = vim.env[variable]
+    if root then
+      local candidate = root .. "\\Microsoft\\Edge\\Application\\msedge.exe"
+      if vim.fn.executable(candidate) == 1 then
+        return candidate
+      end
+    end
+  end
+end
+
 function M.command(config, url)
   local configured = config.browser_command
   if type(configured) == "function" then
@@ -18,6 +30,13 @@ function M.command(config, url)
       command[#command + 1] = url
     end
     return command
+  end
+
+  if vim.uv.os_uname().sysname == "Windows_NT" then
+    local edge = windows_edge()
+    if edge then
+      return { edge, "--new-window", url }
+    end
   end
 end
 

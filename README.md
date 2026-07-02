@@ -194,9 +194,10 @@ Common values are `PushEvent`, `PullRequestEvent`, `PullRequestReviewEvent`,
 
 ## Browser
 
-Pantheon opens links using Neovim's standard system-browser handler. To choose
-a browser explicitly, provide its executable and arguments; Pantheon appends
-the URL:
+On Windows, Pantheon opens links directly in a new normal Edge window. It does
+not use a separate browser profile. On other systems it uses Neovim's standard
+system-browser handler. To choose a browser explicitly, provide its executable
+and arguments; Pantheon appends the URL:
 
 ```lua
 require("pantheon").setup({
