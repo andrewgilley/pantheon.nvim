@@ -110,12 +110,17 @@ end
 local function display_contributors(contributors)
   local result = vim.list_extend({}, contributors or {})
   table.sort(result, function(left, right)
-    local left_name = (left.name or left.username):lower()
-    local right_name = (right.name or right.username):lower()
-    if left_name == right_name then
-      return left.username:lower() < right.username:lower()
+    local left_name = left.name or left.username
+    local right_name = right.name or right.username
+    local left_surname = (left_name:match("(%S+)$") or left_name):lower()
+    local right_surname = (right_name:match("(%S+)$") or right_name):lower()
+    if left_surname ~= right_surname then
+      return left_surname < right_surname
     end
-    return left_name < right_name
+    if left_name:lower() ~= right_name:lower() then
+      return left_name:lower() < right_name:lower()
+    end
+    return left.username:lower() < right.username:lower()
   end)
   return result
 end

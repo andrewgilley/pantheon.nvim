@@ -127,6 +127,16 @@ require("pantheon").setup({
       username = "justinmk",
       description = "Neovim maintainer and creator of influential Vim and Neovim tooling",
     },
+    {
+      name = "Roberto Ierusalimschy",
+      username = "roberto-ieru",
+      description = "Principal designer, implementer, and maintainer of the Lua language",
+    },
+    {
+      name = "Peter Steinberger",
+      username = "steipete",
+      description = "Creator of OpenClaw and founder of PSPDFKit",
+    },
   },
 })
 ```
