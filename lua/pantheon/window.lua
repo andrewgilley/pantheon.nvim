@@ -7,6 +7,7 @@ local github = require("pantheon.github")
 local ns = vim.api.nvim_create_namespace("pantheon")
 local preview_ns = vim.api.nvim_create_namespace("pantheon_preview")
 local selection_ns = vim.api.nvim_create_namespace("pantheon_selection")
+local autocmd_group = vim.api.nvim_create_augroup("PantheonWindow", { clear = true })
 
 M.state = {
   buf = nil,
@@ -20,6 +21,7 @@ M.state = {
   preview_key = nil,
   preview_items = nil,
   contributors = {},
+  selected_username = nil,
   filter_scope = nil,
   opts = {},
 }
@@ -101,7 +103,7 @@ end
 local function activity_line(icon, title, timestamp, width)
   local suffix = "  ·  " .. timestamp
   local title_width = math.max(1, width - vim.fn.strdisplaywidth(suffix))
-  local prefix = trim_to_width(("   %s  %s"):format(icon, title), title_width)
+  local prefix = trim_to_width(("   %s    %s"):format(icon, title), title_width)
   return prefix .. suffix
 end
 
@@ -364,10 +366,20 @@ local function render_contributors()
   highlight(#lines - 1, 2, -1, "WinSeparator")
   highlight(#lines, 2, -1, "Comment")
 
-  if M.state.line_targets[6] and is_valid_win(M.state.win) then
-    vim.api.nvim_win_set_cursor(M.state.win, { 6, 0 })
+  local selected_line
+  for line, contributor in pairs(M.state.line_targets) do
+    if contributor.username == M.state.selected_username then
+      selected_line = line
+      break
+    end
+  end
+  selected_line = selected_line or (M.state.line_targets[6] and 6)
+  if selected_line and is_valid_win(M.state.win) then
+    local contributor = M.state.line_targets[selected_line]
+    M.state.selected_username = contributor.username
+    vim.api.nvim_win_set_cursor(M.state.win, { selected_line, 0 })
     highlight_contributor_selection()
-    queue_preview(M.state.line_targets[6])
+    queue_preview(contributor)
   end
 end
 
@@ -567,9 +579,10 @@ local function render_activity(events, cached, notice)
     highlight(4, 2, -1, "DiagnosticWarn")
   end
   for line, _ in pairs(M.state.line_targets) do
-    if lines[line]:match("^   .  ") then
-      highlight(line, 3, 4, "Special")
-      highlight(line, 6, -1, "Function")
+    local gap = lines[line]:find("    ", 4, true)
+    if gap then
+      highlight(line, 3, gap - 1, "Special")
+      highlight(line, gap + 3, -1, "Function")
     else
       highlight(line, 5, -1, "Comment")
     end
@@ -638,6 +651,7 @@ end
 local function select_current()
   local target = target_on_cursor()
   if M.state.view == "contributors" and type(target) == "table" then
+    M.state.selected_username = target.username
     load_activity(target, false)
   elseif M.state.view == "activity" and type(target) == "string" then
     open_url(target)
@@ -710,8 +724,12 @@ local function move_cursor(direction)
     end
   end
   vim.api.nvim_win_set_cursor(M.state.win, { selected, 0 })
+  local target = M.state.line_targets[selected]
+  if M.state.view == "contributors" and type(target) == "table" then
+    M.state.selected_username = target.username
+  end
   highlight_contributor_selection()
-  queue_preview(M.state.line_targets[selected])
+  queue_preview(target)
 end
 
 local function go_back()
@@ -771,6 +789,7 @@ end
 function M.close()
   M.state.request_id = M.state.request_id + 1
   M.state.preview_request_id = M.state.preview_request_id + 1
+  vim.api.nvim_clear_autocmds({ group = autocmd_group })
   if is_valid_win(M.state.win) then
     vim.api.nvim_win_close(M.state.win, true)
   end
@@ -818,7 +837,9 @@ function M.open(opts)
   map_keys(buf)
   render_contributors()
 
+  vim.api.nvim_clear_autocmds({ group = autocmd_group })
   vim.api.nvim_create_autocmd("VimResized", {
+    group = autocmd_group,
     buffer = buf,
     callback = function()
       if is_valid_win(M.state.win) then
@@ -831,6 +852,7 @@ function M.open(opts)
   })
 
   vim.api.nvim_create_autocmd("CursorMoved", {
+    group = autocmd_group,
     buffer = buf,
     callback = function()
       if M.state.view ~= "contributors" or not is_valid_win(M.state.win) then
@@ -840,7 +862,25 @@ function M.open(opts)
       local contributor = M.state.line_targets[line]
       highlight_contributor_selection()
       if type(contributor) == "table" then
+        M.state.selected_username = contributor.username
         queue_preview(contributor)
+      end
+    end,
+  })
+
+  vim.api.nvim_create_autocmd("WinEnter", {
+    group = autocmd_group,
+    callback = function()
+      local entered = vim.api.nvim_get_current_win()
+      if not is_valid_win(M.state.win) or entered == M.state.win then
+        return
+      end
+      if vim.api.nvim_win_get_config(entered).relative ~= "" then
+        vim.schedule(function()
+          if is_valid_win(M.state.win) then
+            M.close()
+          end
+        end)
       end
     end,
   })
