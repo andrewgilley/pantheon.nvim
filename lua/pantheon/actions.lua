@@ -165,14 +165,16 @@ local function comment_url(comment, fallback)
   end
 
   local target = body:gsub("[%c%s]+", " "):gsub("^%s+", ""):gsub("%s+$", "")
-  target = vim.fn.strcharpart(target, 0, 100)
+  target = vim.fn.strcharpart(target, 0, 60)
   if target == "" then
     return url
   end
 
   local fragment, base_url = url:match("#(.+)$"), url:gsub("#.*$", "")
   local anchor = fragment and (fragment .. ":~:text=") or ":~:text="
-  return base_url .. "#" .. anchor .. vim.uri_encode(target)
+  local author = value(comment, "user", "login")
+  local text_fragment = author and (vim.uri_encode(author) .. "," .. vim.uri_encode(target)) or vim.uri_encode(target)
+  return base_url .. "#" .. anchor .. text_fragment
 end
 
 local function event_url(event)
