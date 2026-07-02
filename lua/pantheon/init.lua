@@ -38,6 +38,12 @@ local defaults = {
     },
 
     {
+      name = "Linus Torvalds",
+      username = "torvalds",
+      description = "Creator of Linux and Git",
+    },
+
+    {
       name = "Michael Paulson",
       username = "ThePrimeagen",
       description = "Vim, developer tooling, and performance-focused programming",
