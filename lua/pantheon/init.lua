@@ -16,7 +16,6 @@ local defaults = {
   persist_filters = true,
   state_file = vim.fn.stdpath("state") .. "/pantheon.json",
   browser_command = nil,
-  browser_profile = vim.fn.stdpath("state") .. "/pantheon-browser",
   token = nil,
 
   contributors = {

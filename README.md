@@ -21,7 +21,6 @@ require("pantheon").setup({
   user_activity_types = {},
   persist_filters = true,
   browser_command = nil,
-  browser_profile = vim.fn.stdpath("state") .. "/pantheon-browser",
   contributors = {
     {
       name = "Mitchell Hashimoto",
@@ -193,14 +192,11 @@ Common values are `PushEvent`, `PullRequestEvent`, `PullRequestReviewEvent`,
 `CommitCommentEvent`, `CreateEvent`, `DeleteEvent`, `ForkEvent`, `WatchEvent`,
 `ReleaseEvent`, `GollumEvent`, `MemberEvent`, and `PublicEvent`.
 
-## Browser windows
+## Browser
 
-Pantheon detects Chrome, Edge, or Firefox and launches links in a normal new
-browser window with its address bar and standard controls. Chromium browsers use
-a dedicated persistent profile so Edge cannot redirect the URL into a tab in
-your existing browser window. The selected GitHub page is passed as the only
-tab target. To choose a browser explicitly, provide its
-executable and new-window flag; Pantheon appends the URL:
+Pantheon opens links using Neovim's standard system-browser handler. To choose
+a browser explicitly, provide its executable and arguments; Pantheon appends
+the URL:
 
 ```lua
 require("pantheon").setup({
@@ -210,6 +206,3 @@ require("pantheon").setup({
   },
 })
 ```
-
-The dedicated profile stores its browser state under `browser_profile`. Its
-cookies and sign-ins are separate from your normal Edge or Chrome profile.
