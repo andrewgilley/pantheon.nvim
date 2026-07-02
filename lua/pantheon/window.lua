@@ -458,6 +458,8 @@ local function render_filters(scope, selected_type)
       selected_line = line
     end
   end
+  local width = vim.api.nvim_win_get_width(M.state.win)
+  lines[#lines + 1] = "  " .. string.rep("─", math.max(1, width - 4))
   footer(lines, "i/k move   space/l/→ toggle   a all   n none   j/← back")
   set_lines(lines)
   vim.wo[M.state.win].cursorline = true
@@ -470,6 +472,7 @@ local function render_filters(scope, selected_type)
     highlight(line, 7, 35, "Function")
     highlight(line, 36, -1, "Comment")
   end
+  highlight(#lines - 1, 2, -1, "WinSeparator")
   highlight(#lines, 2, -1, "Comment")
 
   vim.api.nvim_win_set_cursor(M.state.win, { selected_line or 6, 0 })
