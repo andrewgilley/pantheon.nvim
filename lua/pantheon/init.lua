@@ -23,7 +23,7 @@ local defaults = {
     {
       name = "Mitchell Hashimoto",
       username = "mitchellh",
-      description = "Creator of Ghostty, HashiCorp, Vagrant, Terraform, and Nomad",
+      description = "Creator of Ghostty, HashiCorp, Terraform, and Nomad",
     },
 
     {
@@ -47,7 +47,7 @@ local defaults = {
     {
       name = "Michael Paulson",
       username = "ThePrimeagen",
-      description = "Vim, developer tooling, and performance-focused programming",
+      description = "Vim, developer tooling, and performance programming",
     },
 
     {
@@ -83,7 +83,7 @@ local defaults = {
     {
       name = "Andrej Karpathy",
       username = "karpathy",
-      description = "AI researcher and creator of nanoGPT, llm.c, and micrograd",
+      description = "AI researcher; creator of nanoGPT, llm.c, and micrograd",
     },
 
     {
@@ -95,7 +95,7 @@ local defaults = {
     {
       name = "Folke Lemaitre",
       username = "folke",
-      description = "Creator of lazy.nvim, LazyVim, and influential Neovim tooling",
+      description = "Creator of lazy.nvim, LazyVim, and Neovim tooling",
     },
 
     {
@@ -107,23 +107,23 @@ local defaults = {
     {
       name = "Simon Willison",
       username = "simonw",
-      description = "Creator of Datasette and prolific builder of practical LLM tooling",
+      description = "Creator of Datasette and practical LLM tooling",
     },
 
     {
       name = "Steven Arcangeli",
       username = "stevearc",
-      description = "Creator of influential Neovim plugins and developer tooling",
+      description = "Creator of Neovim plugins and developer tooling",
     },
     {
       name = "Charlie Marsh",
       username = "charliermarsh",
-      description = "Builder of Ruff, uv, ty, and high-performance Python tooling",
+      description = "Builder of Ruff, uv, ty, and fast Python tooling",
     },
     {
       name = "Andrew Gallant",
       username = "BurntSushi",
-      description = "Creator of ripgrep and foundational Rust regex and datetime libraries",
+      description = "Creator of ripgrep, Rust regex, and jiff",
     },
     {
       name = "Carl Lerche",
@@ -133,22 +133,22 @@ local defaults = {
     {
       name = "Georgi Gerganov",
       username = "ggerganov",
-      description = "Creator of llama.cpp, whisper.cpp, and efficient local AI tooling",
+      description = "Creator of llama.cpp, whisper.cpp, and local AI tools",
     },
     {
       name = "David Tolnay",
       username = "dtolnay",
-      description = "Creator and maintainer of foundational Rust libraries and procedural macro tooling",
+      description = "Maintainer of foundational Rust libraries and macros",
     },
     {
       name = "Justin M. Keyes",
       username = "justinmk",
-      description = "Neovim maintainer and creator of influential Vim and Neovim tooling",
+      description = "Neovim maintainer and influential tooling creator",
     },
     {
       name = "Roberto Ierusalimschy",
       username = "roberto-ieru",
-      description = "Principal designer, implementer, and maintainer of the Lua language",
+      description = "Principal designer and maintainer of the Lua language",
     },
     {
       name = "Peter Steinberger",
@@ -158,7 +158,7 @@ local defaults = {
     {
       name = "Russ Cox",
       username = "rsc",
-      description = "Go language and toolchain engineer, technical writer, and open-source maintainer",
+      description = "Go engineer, writer, and open-source maintainer",
     },
     {
       name = "David Heinemeier Hansson",
@@ -168,7 +168,7 @@ local defaults = {
     {
       name = "Alex Crichton",
       username = "alexcrichton",
-      description = "WebAssembly, Wasmtime, wasm-bindgen, and Rust tooling engineer",
+      description = "WebAssembly, Wasmtime, wasm-bindgen, and Rust engineer",
     },
     {
       name = "Andrew Clark",
