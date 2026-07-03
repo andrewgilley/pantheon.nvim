@@ -346,7 +346,7 @@ local function render_contributors()
       break
     end
   end
-  local list_limit = math.max(1, math.floor(tonumber(M.state.opts.contributor_list_limit) or 12))
+  local list_limit = math.max(1, math.floor(tonumber(M.state.opts.contributor_list_limit) or 20))
   local max_offset = math.max(1, #contributors - list_limit + 1)
   local offset = math.min(math.max(1, M.state.contributor_offset or 1), max_offset)
   if selected_index < offset then

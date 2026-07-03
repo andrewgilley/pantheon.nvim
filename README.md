@@ -16,7 +16,7 @@ require("pantheon").setup({
   height = 0.80,
   row = 1,
   results_limit = 20,
-  contributor_list_limit = 12,
+  contributor_list_limit = 20,
   push_detail_limit = 10,
   activity_types = nil,
   user_activity_types = {},
