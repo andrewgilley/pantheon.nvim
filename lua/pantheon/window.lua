@@ -149,7 +149,8 @@ local function relative_time(timestamp)
   local seconds = math.max(0, os.difftime(os.time(), then_time - offset))
 
   if seconds < 60 then
-    return "just now"
+    local count = math.floor(seconds)
+    return count .. (count == 1 and " second ago" or " seconds ago")
   elseif seconds < 3600 then
     local count = math.floor(seconds / 60)
     return count .. (count == 1 and " minute ago" or " minutes ago")
