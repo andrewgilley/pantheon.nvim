@@ -293,6 +293,20 @@ local function highlight_contributor_selection()
     return
   end
   vim.api.nvim_buf_clear_namespace(M.state.buf, selection_ns, 0, -1)
+  if M.state.view ~= "contributors" or not is_valid_win(M.state.win) then
+    return
+  end
+
+  local line = vim.api.nvim_win_get_cursor(M.state.win)[1]
+  if type(M.state.line_targets[line]) ~= "table" then
+    return
+  end
+  local text = vim.api.nvim_buf_get_lines(M.state.buf, line - 1, line, false)[1] or ""
+  local item_text = text:gsub("%s+$", "")
+  vim.api.nvim_buf_set_extmark(M.state.buf, selection_ns, line - 1, 2, {
+    end_col = #item_text,
+    hl_group = "PmenuSel",
+  })
 end
 
 local function render_contributors()

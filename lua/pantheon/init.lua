@@ -115,61 +115,73 @@ local defaults = {
       username = "stevearc",
       description = "Creator of Neovim plugins and developer tooling",
     },
+
     {
       name = "Charlie Marsh",
       username = "charliermarsh",
       description = "Builder of Ruff, uv, ty, and fast Python tooling",
     },
+
     {
       name = "Andrew Gallant",
       username = "BurntSushi",
       description = "Creator of ripgrep, Rust regex, and jiff",
     },
+
     {
       name = "Carl Lerche",
       username = "carllerche",
       description = "Rust asynchronous systems engineer and creator of Tokio",
     },
+
     {
       name = "Georgi Gerganov",
       username = "ggerganov",
       description = "Creator of llama.cpp, whisper.cpp, and local AI tools",
     },
+
     {
       name = "David Tolnay",
       username = "dtolnay",
       description = "Maintainer of foundational Rust libraries and macros",
     },
+
     {
       name = "Justin M. Keyes",
       username = "justinmk",
       description = "Neovim maintainer and influential tooling creator",
     },
+
     {
       name = "Roberto Ierusalimschy",
       username = "roberto-ieru",
       description = "Principal designer and maintainer of the Lua language",
     },
+
     {
       name = "Peter Steinberger",
       username = "steipete",
       description = "Creator of OpenClaw and founder of PSPDFKit",
     },
+
     {
       name = "Russ Cox",
       username = "rsc",
       description = "Go engineer, writer, and open-source maintainer",
     },
+
     {
-      name = "David Heinemeier Hansson",
+      name = "David H. Hansson",
       username = "dhh",
       description = "Creator of Ruby on Rails and co-owner of 37signals",
     },
+
     {
       name = "Alex Crichton",
       username = "alexcrichton",
       description = "WebAssembly, Wasmtime, wasm-bindgen, and Rust engineer",
     },
+
     {
       name = "Andrew Clark",
       username = "acdlite",
@@ -182,9 +194,11 @@ M.config = vim.deepcopy(defaults)
 
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", vim.deepcopy(defaults), opts or {})
+
   if opts and opts.contributors then
     M.config.contributors = vim.deepcopy(opts.contributors)
   end
+
   if M.config.persist_filters then
     local saved = require("pantheon.storage").load(M.config.state_file)
     if saved then
