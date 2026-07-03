@@ -14,6 +14,7 @@ end
 
 function M.command(config, url)
   local configured = config.browser_command
+
   if type(configured) == "function" then
     return configured(url)
   elseif type(configured) == "table" and #configured > 0 then
@@ -43,7 +44,6 @@ end
 function M.open(url, config)
   local command = M.command(config, url)
   if not command then
-    -- Delegate to the operating system's standard browser handler.
     return vim.ui.open(url)
   end
 

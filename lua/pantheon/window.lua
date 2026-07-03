@@ -305,7 +305,7 @@ local function highlight_contributor_selection()
   local item_text = text:gsub("%s+$", "")
   vim.api.nvim_buf_set_extmark(M.state.buf, selection_ns, line - 1, 2, {
     end_col = #item_text,
-    hl_group = "PmenuSel",
+    hl_group = "PantheonSelection",
   })
 end
 
@@ -878,6 +878,7 @@ function M.open(opts)
   vim.wo[win].cursorlineopt = "line"
   vim.api.nvim_set_hl(0, "PantheonNormal", { bg = "NONE" })
   vim.api.nvim_set_hl(0, "PantheonBorder", { fg = "#ffffff", bg = "NONE" })
+  vim.api.nvim_set_hl(0, "PantheonSelection", { fg = "#ffffff", bg = "NONE", bold = true })
   vim.wo[win].winhighlight = table.concat({
     "Normal:PantheonNormal",
     "NormalFloat:PantheonNormal",
