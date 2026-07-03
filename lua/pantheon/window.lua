@@ -22,6 +22,7 @@ M.state = {
   preview_items = nil,
   contributors = {},
   selected_username = nil,
+  contributor_offset = 1,
   filter_scope = nil,
   opts = {},
 }
@@ -338,7 +339,25 @@ local function render_contributors()
     "#", pad_cell("CONTRIBUTOR", name_width), pad_cell("GITHUB", username_width)
   )
 
+  local selected_index = 1
   for index, contributor in ipairs(contributors) do
+    if contributor.username == M.state.selected_username then
+      selected_index = index
+      break
+    end
+  end
+  local list_limit = math.max(1, math.floor(tonumber(M.state.opts.contributor_list_limit) or 12))
+  local max_offset = math.max(1, #contributors - list_limit + 1)
+  local offset = math.min(math.max(1, M.state.contributor_offset or 1), max_offset)
+  if selected_index < offset then
+    offset = selected_index
+  elseif selected_index >= offset + list_limit then
+    offset = selected_index - list_limit + 1
+  end
+  M.state.contributor_offset = offset
+
+  for index = offset, math.min(#contributors, offset + list_limit - 1) do
+    local contributor = contributors[index]
     local line = #lines + 1
     local index_label = tostring(index)
     local handle = "@" .. contributor.username
@@ -355,7 +374,12 @@ local function render_contributors()
     lines[#lines + 1] = "  No contributors configured."
   end
   lines[#lines + 1] = "  " .. string.rep("─", math.max(1, left_width - 2))
+  local separator_line = #lines
   lines[#lines + 1] = "  i/k move  l/→ open  f/F types  q quit"
+  local commands_line = #lines
+  while #lines < math.min(vim.api.nvim_win_get_height(M.state.win), 25) do
+    lines[#lines + 1] = ""
+  end
   set_lines(lines)
   vim.wo[M.state.win].cursorline = false
 
@@ -369,8 +393,8 @@ local function render_contributors()
       highlight(line, username_start - 1, username_start + username_width, "Identifier")
     end
   end
-  highlight(#lines - 1, 2, -1, "WinSeparator")
-  highlight(#lines, 2, -1, "Comment")
+  highlight(separator_line, 2, -1, "WinSeparator")
+  highlight(commands_line, 2, -1, "Comment")
 
   local selected_line
   for line, contributor in pairs(M.state.line_targets) do
@@ -705,6 +729,22 @@ local function move_cursor(direction)
     return
   end
 
+  if M.state.view == "contributors" and #M.state.contributors > 0 then
+    local target = target_on_cursor()
+    local username = type(target) == "table" and target.username or M.state.selected_username
+    local current_index = 1
+    for index, contributor in ipairs(M.state.contributors) do
+      if contributor.username == username then
+        current_index = index
+        break
+      end
+    end
+    local next_index = ((current_index - 1 + direction) % #M.state.contributors) + 1
+    M.state.selected_username = M.state.contributors[next_index].username
+    render_contributors()
+    return
+  end
+
   local selectable = {}
   for line, target in pairs(M.state.line_targets) do
     local contributor_target = M.state.view ~= "activity" and type(target) == "table"
@@ -786,6 +826,12 @@ local function map_keys(buf)
   map("<Up>", function()
     move_cursor(-1)
   end, "Select previous Pantheon contributor")
+  map("<ScrollWheelDown>", function()
+    move_cursor(1)
+  end, "Scroll Pantheon contributors down")
+  map("<ScrollWheelUp>", function()
+    move_cursor(-1)
+  end, "Scroll Pantheon contributors up")
   map("b", go_back, "Return to Pantheon contributors")
   map("r", function()
     if M.state.view == "activity" and M.state.contributor then

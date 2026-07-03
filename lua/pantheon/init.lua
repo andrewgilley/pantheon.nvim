@@ -8,6 +8,7 @@ local defaults = {
   title = " Pantheon ",
   per_page = 30,
   results_limit = 20,
+  contributor_list_limit = 12,
   push_detail_limit = 10,
   cache_ttl = 300,
   request_timeout = 15,
@@ -153,6 +154,26 @@ local defaults = {
       name = "Peter Steinberger",
       username = "steipete",
       description = "Creator of OpenClaw and founder of PSPDFKit",
+    },
+    {
+      name = "Russ Cox",
+      username = "rsc",
+      description = "Go language and toolchain engineer, technical writer, and open-source maintainer",
+    },
+    {
+      name = "David Heinemeier Hansson",
+      username = "dhh",
+      description = "Creator of Ruby on Rails and co-owner of 37signals",
+    },
+    {
+      name = "Alex Crichton",
+      username = "alexcrichton",
+      description = "WebAssembly, Wasmtime, wasm-bindgen, and Rust tooling engineer",
+    },
+    {
+      name = "Andrew Clark",
+      username = "acdlite",
+      description = "React core engineer and co-creator of Redux",
     },
   },
 }
